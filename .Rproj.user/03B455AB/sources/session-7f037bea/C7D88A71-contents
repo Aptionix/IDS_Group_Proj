@@ -1,0 +1,20 @@
+---
+title: "Part_A"
+output: pdf_document
+date: "`r Sys.Date()`"
+---
+```{r setup}
+library(tidyverse)
+library(ggplot2)
+library(readr)
+```
+
+```{r importing data}
+# !!!NOTE: PLEASE SET THE NAME OF THE FOLDER CONTAINING csv FILES TO BE "data"!!!
+
+Coutry_List <- read_csv("data/continents-according-to-our-world-in-data.csv")
+
+GDP_pc <- read_csv("data/gdp-per-capita-worldbank.csv")
+
+Youth_no_EET <- read_csv("data/youth-not-in-education-employment-training.csv")
+```
