@@ -1,0 +1,116 @@
+---
+title: "IDS Code"
+author: "CJD"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Assignment brief
+• Perform exploratory data analysis to assess how 6 continents in the world (all continents except Antarctica) are faring with respect to the following specific targets set out by the UN:
+
+1. Sustain per capita economic growth in accordance with national circumstances and, in particular, at least 7 per cent gross domestic product growth per annum in the least developed countries.
+
+2. By 2020, substantially reduce the proportion of youth not in employment, education or training.
+
+Find another CSV file to add to analysis
+
+
+Loading librarys:
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+
+
+We must set the wd and import the 3 CSV files as data frames.
+(note eet means education, employment, and training)
+```{r}
+setwd("/Users/charliedicker/Downloads/data sets")
+
+continents <- read.csv("continents-according-to-our-world-in-data.csv")
+gdp_per_capita_df <- read.csv("gdp-per-capita-worldbank.csv")
+youth_not_in_eet <- read.csv("youth-not-in-education-employment-training.csv")
+ldc_df <- read.csv("LDCs.csv")
+```
+
+
+We now clean the data, getting rid of any irrelevant data
+```{r}
+
+# The year is irrelevant in continents, as the only thing this df needs to be used for is assigning a continent to a country
+continents$Year <- NULL
+continents$Entity <- NULL
+
+# We now assign the continent to each country in gdp per capita
+gdp_per_capita_df <- gdp_per_capita_df %>% 
+  left_join(continents, by = "Code")
+
+# Same thing for youth not in eet
+youth_not_in_eet <- youth_not_in_eet %>% 
+  left_join(continents, by = "Code")
+
+# The continents table is now redundant
+rm(continents)
+
+
+```
+
+
+Still cleaning (renaming columns to nicer names)
+```{r}
+# Rename a column in gdp per capita
+gdp_per_capita_df <- gdp_per_capita_df %>% 
+  rename("Gdp_per_capita" = "GDP.per.capita..PPP..constant.2017.international...")
+
+# Rename a column in youth not in eet
+youth_not_in_eet <- youth_not_in_eet %>% 
+  rename("Perc_youth_not_in_eet" = "Share.of.youth.not.in.education..employment.or.training..total....of.youth.population.")
+```
+
+
+Dropping values before the year 2014, and if continent is NA
+```{r}
+# Drop all values before 2014, as these UN goals were set in 2015
+gdp_per_capita_df <- gdp_per_capita_df %>% 
+  filter(Year >= 2014 & !is.na(Continent))
+
+youth_not_in_eet <- youth_not_in_eet %>% 
+  filter(Year >= 2014 & !is.na(Continent))
+```
+
+
+Calculating Economic Growth and change in eet of each country
+```{r}
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Growth = ifelse(lag(Entity) != Entity, NA, (Gdp_per_capita - lag(Gdp_per_capita)) / lag(Gdp_per_capita) * 100))
+
+youth_not_in_eet <- youth_not_in_eet %>%
+  mutate(Perc_change = ifelse(lag(Entity) != Entity, NA, (Perc_youth_not_in_eet - lag(Perc_youth_not_in_eet)) / lag(Perc_youth_not_in_eet) * 100))
+```
+
+
+
+This chunk is now to add a flag to the gdp per capita dataframe, labelling if a country is an LDC or not
+```{r}
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Ldc = Entity %in% ldc_df$Entity)
+```
+
+
+
+
+
+
+
+
+REF:
+25/11/2025 asked ChatGPT "what would the definition of "least developed countries" mean in terms of gdp per capita (PPP)"
+
+26/11/2025 asked ChatGPT "create me a downloadable csv file, containing all ldcs recognised by the un between the years of 2015 and 2021, with the title of the column being "Entity""
+
+
