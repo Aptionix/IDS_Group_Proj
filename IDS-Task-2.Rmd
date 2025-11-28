@@ -1,27 +1,33 @@
 ---
-title: "Task 2"
-author: "CJD"
+title: "Question 1 Task 2"
+author: "K9"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-Librarys:
-```{r}
 library(tidyverse)
 library(ggplot2)
 ```
 
-
-Set WD and import data
-```{r}
-# CHANGE THIS TO YOUR OWN WD
-setwd("/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data")
-
-youth_not_in_eet_df <- read.csv("youth_not_in_eet.csv")
+```{r import data}
+youth_not_eet <- read.csv("Exported_data/youth_not_in_eet.csv")
+colnames(youth_not_eet)[4] <- "Percentage"
 ```
 
-To add chunks of code in R Markdown files, press code in the top, then add chunk.
+```{r}
+youth_not_eet %>%
+  group_by(Continent, Year) %>%
+  summarise(weighted_average = weighted.mean(Percentage, Population)) %>%
+  ungroup() %>% 
+  ggplot(aes(x = Year, y = weighted_average, colour = Continent)) +
+  geom_point() +
+  geom_line() + 
+  labs(x = "Year", 
+       y = "Percentage",
+       title = "Comparison of Percentage of Youth not in EET")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12,
+                                  hjust = 0))
+```
