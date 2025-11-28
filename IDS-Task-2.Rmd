@@ -1,0 +1,27 @@
+---
+title: "Task 2"
+author: "CJD"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Librarys:
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+
+Set WD and import data
+```{r}
+# CHANGE THIS TO YOUR OWN WD
+setwd("/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data")
+
+youth_not_in_eet_df <- read.csv("youth_not_in_eet.csv")
+```
+
+To add chunks of code in R Markdown files, press code in the top, then add chunk.

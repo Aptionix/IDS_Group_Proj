@@ -1,0 +1,183 @@
+---
+title: "IDS Code"
+author: "CJD"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Assignment brief
+• Perform exploratory data analysis to assess how 6 continents in the world (all continents except Antarctica) are faring with respect to the following specific targets set out by the UN:
+
+1. Sustain per capita economic growth in accordance with national circumstances and, in particular, at least 7 per cent gross domestic product growth per annum in the least developed countries.
+
+2. By 2020, substantially reduce the proportion of youth not in employment, education or training.
+
+Find another CSV file to add to analysis
+
+
+Loading librarys:
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+
+
+We must set the wd and import the 3 CSV files as data frames.
+(note eet means education, employment, and training)
+```{r}
+setwd("/Users/charliedicker/Downloads/data_sets")
+
+continents <- read.csv("continents-according-to-our-world-in-data.csv")
+gdp_per_capita_df <- read.csv("gdp-per-capita-worldbank.csv")
+youth_not_in_eet <- read.csv("youth-not-in-education-employment-training.csv")
+
+# We now create a vector of all LDC countries
+ldc_countries <- c(
+  "Afghanistan", "Angola", "Bangladesh", "Benin", "Bhutan", "Burkina Faso",
+  "Burundi", "Cambodia", "Central African Republic", "Chad", "Comoros",
+  "Democratic Republic of the Congo", "Djibouti", "Eritrea", "Ethiopia",
+  "Gambia", "Guinea", "Guinea-Bissau", "Haiti", "Kiribati",
+  "Lao People's Democratic Republic", "Lesotho", "Liberia", "Madagascar",
+  "Malawi", "Mali", "Mauritania", "Mozambique", "Myanmar", "Nepal",
+  "Niger", "Rwanda", "Sao Tome and Principe", "Senegal", "Sierra Leone",
+  "Solomon Islands", "Somalia", "South Sudan", "Sudan", "Timor-Leste",
+  "Togo", "Tuvalu", "Uganda", "United Republic of Tanzania",
+  "Vanuatu", "Yemen", "Zambia"
+)
+
+# I downloaded population data off world bank, to calculate gdp
+population_df <- read.csv("population.csv")
+```
+
+
+We now clean the data, getting rid of any irrelevant data
+```{r}
+
+# The year is irrelevant in continents, as the only thing this df needs to be used for is assigning a continent to a country
+continents$Year <- NULL
+continents$Entity <- NULL
+
+# We now assign the continent to each country in gdp per capita
+gdp_per_capita_df <- gdp_per_capita_df %>% 
+  left_join(continents, by = "Code")
+
+# Same thing for youth not in eet
+youth_not_in_eet <- youth_not_in_eet %>% 
+  left_join(continents, by = "Code")
+
+# The continents table is now redundant
+rm(continents)
+
+
+
+# We clean population data, dropping all columns that aren't year and country
+population_df$Series.Name <- NULL
+population_df$Series.Code <- NULL
+population_df$Country.Code <- NULL
+
+
+```
+
+
+Still cleaning (renaming columns to nicer names)
+```{r}
+# Rename a column in gdp per capita
+gdp_per_capita_df <- gdp_per_capita_df %>% 
+  rename(Gdp_per_capita = GDP.per.capita..PPP..constant.2017.international...)
+
+# Rename a column in youth not in eet
+youth_not_in_eet <- youth_not_in_eet %>% 
+  rename(Perc_youth_not_in_eet = Share.of.youth.not.in.education..employment.or.training..total....of.youth.population.)
+
+population_df <- population_df %>%
+  rename(
+    Year_2015 = X2015..YR2015.,
+    Year_2016 = X2016..YR2016.,
+    Year_2017 = X2017..YR2017.,
+    Year_2018 = X2018..YR2018.,
+    Year_2019 = X2019..YR2019.,
+    Year_2020 = X2020..YR2020.,
+    Year_2021 = X2021..YR2021.,
+    Entity = Country.Name
+  )
+```
+
+
+Dropping values before the year 2014, and if population data is above 2021, and if continent is NA.
+```{r}
+# Drop all values before 2014, as these UN goals were set in 2015
+gdp_per_capita_df <- gdp_per_capita_df %>% 
+  filter(Year >= 2014 & !is.na(Continent))
+
+youth_not_in_eet <- youth_not_in_eet %>% 
+  filter(Year >= 2014 & !is.na(Continent))
+
+```
+
+
+Here we make population into long format, so that we can join the data frames
+```{r}
+population_df <- population_df %>%
+  pivot_longer(
+    cols = starts_with("Year_"),     
+    names_to = "Year",              
+    values_to = "Population"          
+  ) %>%
+  mutate(
+    Year = as.integer(sub("Year_", "", Year))  # remove "Year_" and make numeric
+  )
+```
+
+
+
+Calculating Economic Growth and change in eet of each country
+```{r}
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Growth = ifelse(lag(Entity) != Entity, NA, (Gdp_per_capita - lag(Gdp_per_capita)) / lag(Gdp_per_capita) * 100))
+
+youth_not_in_eet <- youth_not_in_eet %>%
+  mutate(Perc_change = ifelse(lag(Entity) != Entity, NA, (Perc_youth_not_in_eet - lag(Perc_youth_not_in_eet)) / lag(Perc_youth_not_in_eet) * 100))
+```
+
+
+This chunk is now to add a flag to the gdp per capita dataframe, labelling if a country is an LDC or not
+```{r}
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Ldc = Entity %in% ldc_countries)
+```
+
+Merging the data frames to include population in both
+```{r}
+gdp_per_capita_df <- merge(gdp_per_capita_df, population_df, by = c("Entity", "Year"))
+youth_not_in_eet <- merge(youth_not_in_eet, population_df, by = c("Entity", "Year"))
+```
+
+Now we convert to numeric and calculate GDP per capita of each country each year
+```{r}
+gdp_per_capita_df$Population <- as.numeric(gdp_per_capita_df$Population)
+
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Gdp = Population * Gdp_per_capita)
+```
+
+Finally, export the CSV files of the 2 data frames
+```{r}
+write.csv(gdp_per_capita_df, "/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data/gdp_per_capita_df.csv", row.names = FALSE)
+write.csv(youth_not_in_eet, "/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data/youth_not_in_eet.csv", row.names = FALSE)
+
+```
+
+
+
+
+
+
+REF:
+25/11/2025 asked ChatGPT "what would the definition of "least developed countries" mean in terms of gdp per capita (PPP)"
+
+26/11/2025 asked ChatGPT "give me a list of all countries the UN considers LDCs between 2015 and 2021, with each country in quotation marks seperated by commas"
