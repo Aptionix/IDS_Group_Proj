@@ -122,7 +122,10 @@ Plot the graphs
 ```{r}
 ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
   geom_line() +
-  facet_wrap(~ Continent) 
+  facet_wrap(~ Continent) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme(legend.position = "none")
+
 ```
 
 Waiiittttt on the y axis what exactly should i put? gdp, gdp per capita or growth???
@@ -137,13 +140,17 @@ ldc_weighted <- ldc %>%
   ) %>%
   ungroup()
 
-ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, color = Entity)) +
+ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, colour = Continent)) +
   geom_line() +
+  geom_point() +
   facet_wrap(~ Continent) +
-   geom_hline(yintercept = 7, linetype = "dashed", color = "red")
+  theme(legend.position = "none") +
+  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") 
+
+
 ```
 
-8 add a horizontal reference line at 7%
 
 
 
