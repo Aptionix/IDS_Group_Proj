@@ -11,6 +11,12 @@ library(tidyverse)
 library(ggplot2)
 ```
 
+In this section, we will discuss the extent each continent working toward the goal
+of reducing the proportion of youth not in employment, education or training (hereafter
+referred to as NEET).
+
+We would first draw a graph to demonstrate the change of NEET for each continent 
+with the year.
 ```{r import data}
 youth_not_eet <- read.csv("Exported_data/youth_not_in_eet.csv")
 colnames(youth_not_eet)[4] <- "Percentage"
@@ -26,7 +32,7 @@ youth_not_eet %>%
   geom_line() + 
   labs(x = "Year", 
        y = "Percentage",
-       title = "Comparison of Percentage of Youth not in EET")+
+       title = "Comparison of NEET")+
   theme_minimal()+
   theme(plot.title = element_text(size = 12,
                                   hjust = 0))
