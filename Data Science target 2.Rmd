@@ -1,0 +1,132 @@
+---
+title: "Data Science project task 2"
+author: "Vasiliki"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(broom)
+```
+
+```{r import data}
+# Import the data from the specified path
+youth_not_eet <- read.csv("/Users/vasilikimichalia/Desktop/IDS_Group_Proj-main/Exported_data/youth_not_in_eet.csv")
+# Rename the fourth column for clarity
+colnames(youth_not_eet)[4] <- "Percentage"
+```
+```{r}
+# 1. Define youth_summary and continent_colors
+# Calculate the weighted average data
+youth_summary <- youth_not_eet %>%
+  group_by(Continent, Year) %>%
+  # Use na.rm = TRUE in weighted.mean to handle missing data
+  summarise(weighted_average = weighted.mean(Percentage, Population, na.rm = TRUE)) %>% 
+  ungroup()
+
+# Define the color mapping vector
+continent_colors <- c(
+  "Africa"        = "#F8766D",
+  "Asia"          = "#B79F00",
+  "Europe"        = "#00BA38",
+  "North America" = "#00BFC4",
+  "Oceania"       = "#619CFF",
+  "South America" = "#F564E3"
+)
+# 1. Calculate all slopes, p-values, and annotation positions
+slope_data <- youth_summary %>%
+  # Group the data by continent so that the linear model is fitted separately for each group
+  group_by(Continent) %>%
+  # Use 'do' to perform a non-standard evaluation (fitting the model) on each group
+  do({
+    # Fit the linear model (Ordinary Least Squares) where weighted_average is the outcome
+    # and Year is the predictor variable.
+    lm_fit <- lm(weighted_average ~ Year, data = .)
+    
+    # Use 'tidy' from the 'broom' package to neatly extract model coefficients and statistics
+    tidy_fit <- broom::tidy(lm_fit)
+    
+    # Get the row corresponding to the 'Year' term (which contains the slope and p-value)
+    slope_stats <- tidy_fit %>% filter(term == "Year")
+    
+    # Extract the slope estimate (coefficient for the Year variable)
+    slope <- slope_stats$estimate
+    # Extract the p-value associated with the slope (to test H0: slope = 0)
+    p_value <- slope_stats$p.value
+    
+    # Determine the significance notation based on standard alpha levels (0.05, 0.01, 0.001)
+    significance_label <- case_when(
+      p_value < 0.001 ~ "(p < 0.001)", # Highly significant
+      p_value < 0.01 ~ "(p < 0.01)",     # Very significant
+      p_value < 0.05 ~ "(p < 0.05)",      # Significant at the 5% level
+      TRUE ~ " (n.s.)"                      # Not significant (p >= 0.05)
+    )
+    
+    # Create the final annotation label string, including the formatted slope and significance
+    slope_label <- sprintf("Slope: %s%.3f %s",
+                           ifelse(slope >= 0, "+", ""), # Add a '+' sign for positive slopes
+                           slope,
+                           significance_label)
+    
+    # Return a new data frame with the label and continent (no x/y needed for this method)
+    data.frame(
+      Continent = unique(.$Continent),
+      slope_label = slope_label
+    )
+  }) %>%
+  # Ungroup the data to allow it to be used in the ggplot call later
+  ungroup()
+
+# Section 2: Combined Plot Generation
+
+# 2. Create the combined plot using facet_wrap
+# Start the ggplot object, using the full summary data and mapping Year/Percentage to axes
+combined_plot <- ggplot(youth_summary, aes(x = Year, y = weighted_average)) +
+  
+  # Add point geom, mapping the point color to the 'Continent' variable
+  geom_point(aes(colour = Continent), alpha = 0.7, size = 3) +
+  
+  # Add smoothing line (linear model, show standard error), mapping color/fill to 'Continent'
+  geom_smooth(aes(colour = Continent, fill = Continent), method = "lm", se = TRUE, size = 1) +
+  
+  # Add the slope text annotations using the pre-calculated 'slope_data'
+  geom_text(data = slope_data,
+            # Place annotation in the top-left corner inside each facet
+            aes(label = slope_label, colour = Continent),
+            x = -Inf, y = Inf,
+            hjust = -0.1, vjust = 1.2,
+            size = 3.5, fontface = "bold") +
+  
+  # Apply the custom hexadecimal color codes to the 'colour' aesthetic
+  scale_colour_manual(values = continent_colors) +
+  # Apply the custom hexadecimal color codes to the 'fill' aesthetic (for confidence interval)
+  scale_fill_manual(values = continent_colors) +
+  
+  # Split the single plot into multiple panels based on the 'Continent' variable
+  facet_wrap(~ Continent,
+             # 'free_y' allows each panel to have its own vertical axis range for better visualization
+             scales = "free_y") +
+  
+  # Define the plot labels (axes and title)
+  labs( x = "Year",
+        y = "Weighted Average Percentage",
+        # Use \n for a line break in the title and define the significance notation
+        title = "Youth Not in EET: Trend by Continent\n(* = significant at 5% level)") +
+  
+  # Apply a minimalist theme
+  theme_minimal() +
+  # Customize theme elements
+  theme(
+    plot.title = element_text(size = 14, hjust = 0), # Title text size and left-alignment
+    legend.position = "none",                        # Hide the legend as colors are continent-specific in facets
+    strip.text = element_text(size = 10, face = "bold") # Format the facet panel labels (Continent names)
+  )
+
+# Display the final combined plot object
+combined_plot
+
+```
