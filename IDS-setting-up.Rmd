@@ -23,7 +23,21 @@ library(readr)
 
 *(Please note that hereafter education, employment, and training would be referred to as EET)*
 
-In this chunk, we would import the data.
+# Data Used in the Report
+
+In the first chunk, we would import the following data:
+
+1. The three data sets given in the Hub;
+
+2. The additional list of the least developed countries in the world;
+
+3. The population of each country for each year in the interval 1960 - 2024 (World Bank, 2025b);
+
+4. The youth unemployment rate (as a percentage of the total labour force) for each country (World Bank, 2025c);
+
+5. The education attainment rate of the population aged 25+ for at least completing an upper secondary education (World Bank, 2025a).
+
+\* *Youth generally would be referred to the indivivual between age 15-24 *
 ```{r importing data, message=FALSE}
 continents <- read.csv("data_sets/continents-according-to-our-world-in-data.csv")
 gdp_per_capita_df <- read.csv("data_sets/gdp-per-capita-worldbank.csv")
@@ -43,7 +57,17 @@ ldc_countries <- c(
   "Vanuatu", "Yemen", "Zambia"
 )
 
+# Importing the population data 
 population <- read_csv("data_sets/population.csv", skip = 3)
+
+# Importing the youth unemployment data
+youth_unemployment <- read_csv("data_sets/youth_unemployment.csv", 
+    skip = 3)
+
+
+# Importing the education Attainment data
+edu_attainment_completed_upper_secondary <- read_csv("data_sets/edu_attainment_completed_upper_secondary.csv", 
+    skip = 3)
 ```
 
 
@@ -150,12 +174,17 @@ write.csv(youth_not_in_eet, "Exported_data/youth_not_in_eet.csv", row.names = FA
 ```
 
 
+\newpage
+
 # Reference
 
-World Bank (2025). Population, Total. [online] The World Bank. Available at: https://data.worldbank.org/indicator/SP.POP.TOTL [Accessed 1 Dec. 2025].
+World Bank (2025a). Educational attainment, at least completed upper secondary, population 25+, total (%) (cumulative) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.SEC.CUAT.UP.ZS [Accessed 1 Dec. 2025].
 
+World Bank (2025b). Population, Total. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SP.POP.TOTL [Accessed 1 Dec. 2025].
 
-# LLM
+World Bank (2025c). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
+
+# LLM Usage
 
 25/11/2025 asked ChatGPT "what would the definition of "least developed countries" mean in terms of gdp per capita (PPP)"
 
