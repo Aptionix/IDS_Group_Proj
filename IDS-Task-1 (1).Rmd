@@ -1,0 +1,202 @@
+---
+title: "Task 1"
+author: "CJD"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Librarys:
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+
+Set WD and import data
+```{r}
+# CHANGE THIS TO YOUR OWN WD
+setwd("/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data")
+
+gdp_per_capita_df <- read.csv("gdp_per_capita_df.csv")
+```
+
+
+Calculate the total GDP of each continent
+```{r}
+continent_gdp_totals <- gdp_per_capita_df %>%
+  group_by(Continent, Year) %>%
+  summarise(
+    Total_GDP = sum(Gdp, na.rm = TRUE)
+  ) %>%
+  ungroup()
+```
+
+
+Plot a graph of GDP for each continent, vs time
+```{r}
+continent_gdp_totals %>% ggplot(aes(x = Year, y = Total_GDP, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  labs(title = "GDP/Year for 6 continents", y = "GDP ($)")
+```
+
+
+I decided this graph could show more if they all started at an index of 100
+```{r}
+continent_gdp_totals <- continent_gdp_totals %>%
+  group_by(Continent) %>%
+  mutate(
+    GDP_Index = Total_GDP / first(Total_GDP) * 100
+  )
+```
+
+
+
+We now replot the graph, using normalised values
+```{r}
+continent_gdp_totals %>% ggplot(aes(x = Year, y = GDP_Index, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  geom_text(
+  data = continent_gdp_totals %>% filter(Year == 2021),
+  aes(label = round(GDP_Index, 1)),
+  hjust = -0.3,
+  size = 3,
+  show.legend = FALSE) +
+  expand_limits(x = 2022) +
+  labs(title = "GDP Index/Year for 6 continents", y = "GDP Index")
+```
+
+
+Calculate the weighted and unweighted growth of each continent
+```{r}
+continents_growth_df <- gdp_per_capita_df %>%
+  group_by(Continent, Year) %>%
+  summarise(
+    Weighted_Growth = sum(Growth * Gdp, na.rm = TRUE) / sum(Gdp, na.rm = TRUE),
+    Avg_Growth = mean(Growth, na.rm = TRUE)
+  ) %>%
+  ungroup()
+```
+
+
+Plot the growth graphs of each continent
+```{r}
+continents_growth_df %>% ggplot(aes(x = Year, y = Weighted_Growth, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  labs(title = "GDP Growth (weighted)/Year for 6 continents", y = "GDP Growth (%)")
+
+continents_growth_df %>% ggplot(aes(x = Year, y = Avg_Growth, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  labs(title = "GDP Growth (avg)/Year for 6 continents", y = "GDP Growth (%)")
+```
+
+
+I decided to do a similar thing with growth about index
+```{r}
+continents_growth_df <- continents_growth_df %>%
+  group_by(Continent) %>%
+  mutate(
+    Avg_Growth_Index = Avg_Growth / first(Avg_Growth) * 100,
+    Weighted_Growth_Index = Weighted_Growth / first(Weighted_Growth) * 100
+  )
+```
+
+
+Plotting the graphs
+```{r}
+continents_growth_df %>% ggplot(aes(x = Year, y = Weighted_Growth_Index, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  labs(title = "GDP Growth Index (weighted)/Year for 6 continents", y = "GDP Growth (%)")
+
+continents_growth_df %>% ggplot(aes(x = Year, y = Avg_Growth_Index, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  labs(title = "GDP Growth Index (avg)/Year for 6 continents", y = "GDP Growth (%)")
+```
+
+
+
+
+REF:
+
+28/11/2025 - asked ChatGPT - "i have text near the last points on the x axis, how can i make it so it doesn't overlap the axis"
+
+
+
+
+
+
+
+
+
+
+
+
+
+Plot ldc growth, each separate country in a  certain continent (6 graphs)
+Create a ldc database
+
+```{r}
+ldc <- gdp_per_capita_df %>%
+  filter (Ldc == TRUE)
+```
+
+Plot the graphs
+
+```{r}
+ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
+  geom_line() +
+  facet_wrap(~ Continent) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme(legend.position = "none")
+
+```
+
+Waiiittttt on the y axis what exactly should i put? gdp, gdp per capita or growth???
+
+7 do a weighted average of ldc growth rate for each contine, then plot a graph of each continent and how they compare
+
+```{r}
+ldc_weighted <- ldc %>%
+  group_by(Year, Continent) %>%
+  mutate(
+    weighted_growth = sum(Gdp_per_capita * Growth, na.rm = TRUE) / sum(Gdp_per_capita, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, colour = Continent)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ Continent) +
+  theme(legend.position = "none") +
+  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") 
+
+
+```
+
+
+
+
+
+
+
+
+
+
+REF:
+
+28/11/2025 - asked ChatGPT - "“I have a facet plot in ggplot with some continents having tons of lines and some only one. How can I adjust the y-axis scales so each graph uses the right space for its lines and they don’t look squished or empty?"
+
