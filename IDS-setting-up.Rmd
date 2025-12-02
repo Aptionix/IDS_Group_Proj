@@ -31,11 +31,11 @@ In the first chunk, we would import the following data:
 
 2. The additional list of the least developed countries in the world;
 
-3. The population of each country for each year in the interval 1960 - 2024 (World Bank, 2025b);
+3. The population of each country for each year in the interval 1960 - 2024 (World Bank, 2025a);
 
-4. The youth unemployment rate (as a percentage of the total labour force) for each country (World Bank, 2025c);
+4. The youth unemployment rate (as a percentage of the total labour force) for each country (World Bank, 2025b);
 
-5. The education attainment rate of the population aged 25+ for at least completing an upper secondary education (World Bank, 2025a).
+5. The education attainment rate of the population aged 25+ for at least completing an upper secondary education (World Bank, 2025c).
 
 \* *Youth generally would be referred to the indivivual between age 15-24 *
 ```{r importing data, message=FALSE}
@@ -57,23 +57,26 @@ ldc_countries <- c(
   "Vanuatu", "Yemen", "Zambia"
 )
 
-# Importing the population data 
+# Importing the population data
 population <- read_csv("data_sets/population.csv", skip = 3)
 
 # Importing the youth unemployment data
-youth_unemployment <- read_csv("data_sets/youth_unemployment.csv", 
-    skip = 3)
+youth_unemployment <- read_csv("data_sets/youth_unemployment.csv",
+  skip = 3
+)
 
 
 # Importing the education Attainment data
-edu_attainment_completed_upper_secondary <- read_csv("data_sets/edu_attainment_completed_upper_secondary.csv", 
-    skip = 3)
+edu_attainment <- read_csv("data_sets/edu_attainment_completed_upper_secondary.csv",
+  skip = 3
+)
 ```
 
+## Original Data Sets Given
 
 We now clean the data, getting rid of any irrelevant data.
 ```{r}
-# The year is irrelevant in continents, as the only thing this df needs to be 
+# The year is irrelevant in continents, as the only thing this df needs to be
 # used for is assigning a continent to a country
 continents$Year <- NULL
 continents$Entity <- NULL
@@ -108,7 +111,7 @@ population <- population %>%
 ```
 
 
-Still cleaning (renaming columns to nicer names).
+Renaming columns to nicer names
 ```{r}
 # Rename a column in gdp per capita
 gdp_per_capita_df <- gdp_per_capita_df %>%
@@ -155,8 +158,8 @@ gdp_per_capita_df <- gdp_per_capita_df %>%
 
 Merging the data frames to include population in both
 ```{r}
-gdp_per_capita_df <- merge(gdp_per_capita_df, population, by = c("Entity", "Year"))
-youth_not_in_eet <- merge(youth_not_in_eet, population, by = c("Entity", "Year"))
+gdp_per_capita_df <- merge(gdp_per_capita_df, population, by = c("Entity", "Year", "Code"))
+youth_not_in_eet <- merge(youth_not_in_eet, population, by = c("Entity", "Year", "Code"))
 ```
 
 Now we convert to numeric and calculate GDP per capita of each country each year
@@ -173,16 +176,62 @@ write.csv(gdp_per_capita_df, "Exported_data/gdp_per_capita_df.csv", row.names = 
 write.csv(youth_not_in_eet, "Exported_data/youth_not_in_eet.csv", row.names = FALSE)
 ```
 
+## Additional Data Sets
+
+We now clean the youth unemployment df and the education attainment df.
+
+```{r}
+youth_unemployment <- youth_unemployment %>%
+  # Remove indicator code&name, and the last column which is all NAs
+  select(-`Indicator Code`, -`Indicator Name`, -70) %>%
+  rename(
+    Entity = `Country Name`,
+    Code = `Country Code`
+  ) %>%
+  pivot_longer(
+    cols = 3:67,
+    names_to = "Year",
+    values_to = "Youth_Unemployment"
+  ) %>%
+  filter(Year >= 2014) 
+
+youth_unemployment$Year <- as.numeric(youth_unemployment$Year)
+
+edu_attainment <- edu_attainment %>%
+  # Remove indicator code&name, and the last column which is all NAs
+  select(-`Indicator Code`, -`Indicator Name`, -70) %>%
+  rename(
+    Entity = `Country Name`,
+    Code = `Country Code`
+  ) %>%
+  pivot_longer(
+    cols = 3:67,
+    names_to = "Year",
+    values_to = "Edu_Attainment"
+  ) %>%
+  filter(Year >= 2014) 
+
+edu_attainment$Year <- as.numeric(edu_attainment$Year)
+
+# Merge these two df's into the youth_not_in_eet
+
+youth_not_in_eet <- youth_not_in_eet %>% 
+  left_join(. , edu_attainment, by = c("Code", "Year", "Entity")) %>% 
+  left_join(. , youth_unemployment, by  = c("Code", "Year", "Entity"))
+
+write.csv(youth_not_in_eet, "Exported_data/youth_not_in_eet.csv", row.names = FALSE)
+```
+
 
 \newpage
 
 # Reference
 
-World Bank (2025a). Educational attainment, at least completed upper secondary, population 25+, total (%) (cumulative) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.SEC.CUAT.UP.ZS [Accessed 1 Dec. 2025].
+World Bank (2025c). Educational attainment, at least completed upper secondary, population 25+, total (%) (cumulative) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.SEC.CUAT.UP.ZS [Accessed 1 Dec. 2025].
 
-World Bank (2025b). Population, Total. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SP.POP.TOTL [Accessed 1 Dec. 2025].
+World Bank (2025a). Population, Total. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SP.POP.TOTL [Accessed 1 Dec. 2025].
 
-World Bank (2025c). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
+World Bank (2025b). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
 
 # LLM Usage
 
