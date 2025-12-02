@@ -18,10 +18,7 @@ library(ggplot2)
 
 Set WD and import data
 ```{r}
-# CHANGE THIS TO YOUR OWN WD
-setwd("/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data")
-
-gdp_per_capita_df <- read.csv("gdp_per_capita_df.csv")
+gdp_per_capita_df <- read.csv("Exported_data/gdp_per_capita_cleaned.csv")
 ```
 
 
