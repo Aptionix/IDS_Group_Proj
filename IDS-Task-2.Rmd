@@ -19,16 +19,16 @@ We would first draw a graph to demonstrate the change of NEET for each continent
 with the year using the line graph.
 
 ```{r import data}
-youth_not_eet <- read.csv("Exported_data/youth_not_in_eet.csv")
-colnames(youth_not_eet)[4] <- "Percentage"
+youth_not_eet <- read.csv("Exported_data/youth_neet_cleaned.csv") %>% 
+  rename("Percentage" = "Perc_youth_not_in_eet")
 ```
 
 ```{r Continent NEET against Year (line chart)}
 youth_not_eet %>%
   group_by(Continent, Year) %>%
-  summarise(weighted_average = weighted.mean(Percentage, Population)) %>%
+  summarise(NEET_avg = weighted.mean(Percentage, Population)) %>%
   ungroup() %>% 
-  ggplot(aes(x = Year, y = weighted_average, colour = Continent)) +
+  ggplot(aes(x = Year, y = NEET_avg, colour = Continent)) +
   geom_point() +
   geom_line() + 
   labs(x = "Year", 
@@ -46,7 +46,7 @@ We then would like to see the regression line for the NEET.
 youth_summary <- youth_not_eet %>%
   group_by(Continent, Year) %>%
   # Use na.rm = TRUE in weighted.mean to handle missing data
-  summarise(weighted_average = weighted.mean(Percentage, Population, na.rm = TRUE)) %>% 
+  summarise(NEET_avg = weighted.mean(Percentage, Population, na.rm = TRUE)) %>% 
   ungroup()
 
 # Define the color mapping vector
@@ -62,7 +62,7 @@ continent_colors <- c(
 slope_data <- youth_summary %>%
   group_by(Continent) %>%
   do({
-    lm_fit <- lm(weighted_average ~ Year, data = .)
+    lm_fit <- lm(NEET_avg ~ Year, data = .)
     tidy_fit <- broom::tidy(lm_fit)
     
     slope_stats <- tidy_fit %>% filter(term == "Year")
@@ -94,7 +94,7 @@ slope_data <- youth_summary %>%
 # Section 2: Combined Plot Generation
 
 # 2. Create the combined plot using facet_wrap
-combined_plot <- ggplot(youth_summary, aes(x = Year, y = weighted_average)) +
+combined_plot <- ggplot(youth_summary, aes(x = Year, y = NEET_avg)) +
   geom_point(aes(colour = Continent), alpha = 0.7, size = 3) +
   geom_smooth(aes(colour = Continent, fill = Continent), method = "lm", se = TRUE, linewidth = 1) +
   geom_text(data = slope_data,
@@ -120,4 +120,25 @@ combined_plot <- ggplot(youth_summary, aes(x = Year, y = weighted_average)) +
 # Display the final combined plot object
 combined_plot
 ```
+
+Then we would like to see how education and employment each contribute to the NEET
+
+```{r Contribution to NEET}
+youth_summary <- youth
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

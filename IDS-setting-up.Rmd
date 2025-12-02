@@ -178,8 +178,8 @@ gdp_per_capita_df <- gdp_per_capita_df %>%
 
 Finally, export the CSV files of the 2 data frames
 ```{r}
-write.csv(gdp_per_capita_df, "Exported_data/gdp_per_capita_df.csv", row.names = FALSE)
-write.csv(youth_not_in_eet, "Exported_data/youth_not_in_eet.csv", row.names = FALSE)
+write.csv(gdp_per_capita_df, "Exported_data/gdp_per_capita_cleaned.csv", row.names = FALSE)
+write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = FALSE)
 ```
 
 ## Additional Data Sets
@@ -225,7 +225,7 @@ youth_not_in_eet <- youth_not_in_eet %>%
   left_join(. , edu_attainment, by = c("Code", "Year", "Entity")) %>% 
   left_join(. , youth_unemployment, by  = c("Code", "Year", "Entity"))
 
-write.csv(youth_not_in_eet, "Exported_data/youth_not_in_eet.csv", row.names = FALSE)
+write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = FALSE)
 ```
 
 
