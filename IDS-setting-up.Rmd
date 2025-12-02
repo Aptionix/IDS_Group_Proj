@@ -37,8 +37,14 @@ In the first chunk, we would import the following data:
 
 5. The education attainment rate of the population aged 25+ for at least completing an upper secondary education (World Bank, 2025c).
 
-\* *Youth generally would be referred to the indivivual between age 15-24 *
+\* *Youth generally would be referred to the individual between age 15-24 *
 ```{r importing data, message=FALSE}
+### Please note that if you have directly cloned the GitHub repository, then you
+### can just leave the code as that, **NO need to change working directory**
+
+### And if you would like to add additional files, please just use the path starting
+### with `data_sets` (as below), as ideally the default wd is the IDS_Group_Proj already
+
 continents <- read.csv("data_sets/continents-according-to-our-world-in-data.csv")
 gdp_per_capita_df <- read.csv("data_sets/gdp-per-capita-worldbank.csv")
 youth_not_in_eet <- read.csv("data_sets/youth-not-in-education-employment-training.csv")
