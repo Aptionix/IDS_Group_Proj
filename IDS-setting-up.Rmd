@@ -132,17 +132,6 @@ youth_not_in_eet <- youth_not_in_eet %>%
 ```
 
 
-Dropping values before the year 2014, and if population data is above 2021, and if continent is NA.
-```{r}
-# Drop all values before 2014, as these UN goals were set in 2015
-gdp_per_capita_df <- gdp_per_capita_df %>%
-  filter(Year >= 2014 & !is.na(Continent))
-
-youth_not_in_eet <- youth_not_in_eet %>%
-  filter(Year >= 2014 & !is.na(Continent))
-```
-
-
 
 Calculating Economic Growth and change in eet of each country
 ```{r}
@@ -198,8 +187,7 @@ youth_unemployment <- youth_unemployment %>%
     cols = 3:67,
     names_to = "Year",
     values_to = "Youth_Unemployment"
-  ) %>%
-  filter(Year >= 2014) 
+  )
 
 youth_unemployment$Year <- as.numeric(youth_unemployment$Year)
 
@@ -214,8 +202,7 @@ edu_attainment <- edu_attainment %>%
     cols = 3:67,
     names_to = "Year",
     values_to = "Edu_Attainment"
-  ) %>%
-  filter(Year >= 2014) 
+  )
 
 edu_attainment$Year <- as.numeric(edu_attainment$Year)
 
