@@ -185,6 +185,56 @@ ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, colour = Continent)) +
 ```
 
 
+#Find the 3 countries with most GDP growth, and 3 countries with most GDP decline 
+
+# Top 3 growth
+top_growth <- gdp_per_capita_df %>%
+  group_by(Entity) %>%
+  summarise(Avg_Growth = mean(Growth, na.rm = TRUE)) %>%
+  arrange(desc(Avg_Growth)) %>%
+  slice(1:3)
+
+# Top 3 decline
+top_decline <- gdp_per_capita_df %>%
+  group_by(Entity) %>%
+  summarise(Avg_Growth = mean(Growth, na.rm = TRUE)) %>%
+  arrange(Avg_Growth) %>%
+  slice(1:3)
+
+#find the countries with biggest gdp in each continent 
+#plot their graphs & analyse their trends, 
+#as these will most likely be the drivers behind any fluctuations, 
+#especially in weighted avg 
+
+#find the countries with biggest gdp in each continent 
+top_3_per_continent <- gdp_per_capita_df %>%
+  group_by(Continent, Entity) %>%
+  summarise(Total_GDP = sum(Gdp, na.rm = TRUE)) %>%
+  arrange(Continent, desc(Total_GDP)) %>%
+  group_by(Continent) %>%
+  slice(1:3)
+
+#plot their graphs 
+filtered_df <- gdp_per_capita_df %>%
+  semi_join(top_3_per_continent, by = c("Continent", "Entity"))
+
+ggplot(filtered_df, aes(x = Year, y = Gdp, colour = Entity)) +
+  geom_line() +
+  facet_wrap(~ Continent, scales = "free_y") +
+  labs(title = "Top 3 Countries by GDP per Capita (per Continent)", y = "GDP per capita")
+#free y scaling - allows the y-axis of a plot to vary independently for each row of facets
+
+#ANALYSIS
+#Africa: Nigeria, South Africa, Algeria
+#Asia: China, India, Japan
+#Europe: Germany, UK, France. Germany leading 
+#North America: US, Mexico, Canada
+#Oceania: Australia, New Zealand, Papa New Guinea
+#South America: Brazil, Argentina, Colombia. Brazil drives volatility, steady increase 
+#in all continents apart from Africa, there is one clear country that is driving GDP
+#why this is important to analyse? these countries are the ones that drive continent averages
+#the weighted averages are heavily influenced by large economics (eg US, China, Germany) 
+#spikes/dips in major economies explain most fluctations in continent graphs. this can definitely be seen in europe in thr last few years for example
 
 
 
