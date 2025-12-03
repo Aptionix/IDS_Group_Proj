@@ -97,7 +97,7 @@ continents_growth_df %>% ggplot(aes(x = Year, y = Avg_Growth, colour = Continent
 ```
 
 
-I decided to do a similar thing with growth about index
+I decided to do a similar thing with growth about index (realised is redundant, don't use in analysis)
 ```{r}
 continents_growth_df <- continents_growth_df %>%
   group_by(Continent) %>%
@@ -156,12 +156,13 @@ Plot the graphs
 ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
   geom_line() +
   facet_wrap(~ Continent) +
+  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
   geom_hline(yintercept = 0, linetype = "dashed") +
   theme(legend.position = "none")
 
 ```
 
-Do a weighted average of ldc growth rate for each contine, then plot a graph of each continent and how they compare
+Do a normal and a weighted average of ldc growth rate for each continent, then plot a graph of each continent and how they compare
 
 ```{r}
 ldc_weighted <- ldc %>%
@@ -177,7 +178,25 @@ ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, colour = Continent)) +
   facet_wrap(~ Continent) +
   theme(legend.position = "none") +
   geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "black") 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  labs(y = "Weighted Growth (%)")
+
+
+ldc_avg_growth <- ldc %>%
+  group_by(Year, Continent) %>%
+  mutate(
+    Avg_growth = mean(Growth, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+ggplot(ldc_avg_growth, aes(x = Year, y = Avg_growth, colour = Continent)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ Continent) +
+  theme(legend.position = "none") +
+  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  labs(y = "Average Growth (%)")
 
 
 ```
