@@ -18,10 +18,7 @@ library(ggplot2)
 
 Set WD and import data
 ```{r}
-# CHANGE THIS TO YOUR OWN WD
-setwd("/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data")
-
-gdp_per_capita_df <- read.csv("gdp_per_capita_df.csv")
+gdp_per_capita_df <- read.csv("Exported_data/gdp_per_capita_cleaned.csv")
 ```
 
 
@@ -72,12 +69,13 @@ continent_gdp_totals %>% ggplot(aes(x = Year, y = GDP_Index, colour = Continent)
 ```
 
 
-Calculate the weighted growth of each continent
+Calculate the weighted and unweighted growth of each continent
 ```{r}
 continents_growth_df <- gdp_per_capita_df %>%
   group_by(Continent, Year) %>%
   summarise(
-    Weighted_Growth = sum(Growth * Gdp, na.rm = TRUE) / sum(Gdp, na.rm = TRUE)
+    Weighted_Growth = sum(Growth * Gdp, na.rm = TRUE) / sum(Gdp, na.rm = TRUE),
+    Avg_Growth = mean(Growth, na.rm = TRUE)
   ) %>%
   ungroup()
 ```
@@ -89,8 +87,43 @@ continents_growth_df %>% ggplot(aes(x = Year, y = Weighted_Growth, colour = Cont
   geom_point() +
   geom_line() +
   geom_hline(yintercept = 0) +
-  labs(title = "GDP Growth/Year for 6 continents", y = "GDP Growth (%)")
+  labs(title = "GDP Growth (weighted)/Year for 6 continents", y = "GDP Growth (%)")
+
+continents_growth_df %>% ggplot(aes(x = Year, y = Avg_Growth, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  labs(title = "GDP Growth (avg)/Year for 6 continents", y = "GDP Growth (%)")
 ```
+
+
+I decided to do a similar thing with growth about index
+```{r}
+continents_growth_df <- continents_growth_df %>%
+  group_by(Continent) %>%
+  mutate(
+    Avg_Growth_Index = Avg_Growth / first(Avg_Growth) * 100,
+    Weighted_Growth_Index = Weighted_Growth / first(Weighted_Growth) * 100
+  )
+```
+
+
+Plotting the graphs
+```{r}
+continents_growth_df %>% ggplot(aes(x = Year, y = Weighted_Growth_Index, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  labs(title = "GDP Growth Index (weighted)/Year for 6 continents", y = "GDP Growth (%)")
+
+continents_growth_df %>% ggplot(aes(x = Year, y = Avg_Growth_Index, colour = Continent)) +
+  geom_point() +
+  geom_line() +
+  geom_hline(yintercept = 0) +
+  labs(title = "GDP Growth Index (avg)/Year for 6 continents", y = "GDP Growth (%)")
+```
+
+
 
 
 REF:
@@ -122,7 +155,10 @@ Plot the graphs
 ```{r}
 ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
   geom_line() +
-  facet_wrap(~ Continent) 
+  facet_wrap(~ Continent) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme(legend.position = "none")
+
 ```
 
 Waiiittttt on the y axis what exactly should i put? gdp, gdp per capita or growth???
@@ -137,14 +173,68 @@ ldc_weighted <- ldc %>%
   ) %>%
   ungroup()
 
-ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, color = Entity)) +
+ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, colour = Continent)) +
   geom_line() +
+  geom_point() +
   facet_wrap(~ Continent) +
-   geom_hline(yintercept = 7, linetype = "dashed", color = "red")
+  theme(legend.position = "none") +
+  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") 
+
+
 ```
 
-8 add a horizontal reference line at 7%
 
+#Find the 3 countries with most GDP growth, and 3 countries with most GDP decline 
+
+# Top 3 growth
+top_growth <- gdp_per_capita_df %>%
+  group_by(Entity) %>%
+  summarise(Avg_Growth = mean(Growth, na.rm = TRUE)) %>%
+  arrange(desc(Avg_Growth)) %>%
+  slice(1:3)
+
+# Top 3 decline
+top_decline <- gdp_per_capita_df %>%
+  group_by(Entity) %>%
+  summarise(Avg_Growth = mean(Growth, na.rm = TRUE)) %>%
+  arrange(Avg_Growth) %>%
+  slice(1:3)
+
+#find the countries with biggest gdp in each continent 
+#plot their graphs & analyse their trends, 
+#as these will most likely be the drivers behind any fluctuations, 
+#especially in weighted avg 
+
+#find the countries with biggest gdp in each continent 
+top_3_per_continent <- gdp_per_capita_df %>%
+  group_by(Continent, Entity) %>%
+  summarise(Total_GDP = sum(Gdp, na.rm = TRUE)) %>%
+  arrange(Continent, desc(Total_GDP)) %>%
+  group_by(Continent) %>%
+  slice(1:3)
+
+#plot their graphs 
+filtered_df <- gdp_per_capita_df %>%
+  semi_join(top_3_per_continent, by = c("Continent", "Entity"))
+
+ggplot(filtered_df, aes(x = Year, y = Gdp, colour = Entity)) +
+  geom_line() +
+  facet_wrap(~ Continent, scales = "free_y") +
+  labs(title = "Top 3 Countries by GDP per Capita (per Continent)", y = "GDP per capita")
+#free y scaling - allows the y-axis of a plot to vary independently for each row of facets
+
+#ANALYSIS
+#Africa: Nigeria, South Africa, Algeria
+#Asia: China, India, Japan
+#Europe: Germany, UK, France. Germany leading 
+#North America: US, Mexico, Canada
+#Oceania: Australia, New Zealand, Papa New Guinea
+#South America: Brazil, Argentina, Colombia. Brazil drives volatility, steady increase 
+#in all continents apart from Africa, there is one clear country that is driving GDP
+#why this is important to analyse? these countries are the ones that drive continent averages
+#the weighted averages are heavily influenced by large economics (eg US, China, Germany) 
+#spikes/dips in major economies explain most fluctations in continent graphs. this can definitely be seen in europe in thr last few years for example
 
 
 

@@ -1,40 +1,53 @@
 ---
-title: "IDS Code"
-author: "CJD"
+title: "IDS Group Project Data Setting & Cleaning"
+author: "K9"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(readr)
 ```
 
-Assignment brief
-• Perform exploratory data analysis to assess how 6 continents in the world (all continents except Antarctica) are faring with respect to the following specific targets set out by the UN:
+# Assignment brief
+- Perform exploratory data analysis to assess how 6 continents in the world (all continents except Antarctica) are faring with respect to the following specific targets set out by the UN:
 
 1. Sustain per capita economic growth in accordance with national circumstances and, in particular, at least 7 per cent gross domestic product growth per annum in the least developed countries.
 
 2. By 2020, substantially reduce the proportion of youth not in employment, education or training.
 
-Find another CSV file to add to analysis
+- Find another CSV file to add to analysis
 
+*(Please note that hereafter education, employment, and training would be referred to as EET)*
 
-Loading librarys:
-```{r}
-library(tidyverse)
-library(ggplot2)
-```
+# Data Used in the Report
 
+In the first chunk, we would import the following data:
 
+1. The three data sets given in the Hub;
 
-We must set the wd and import the 3 CSV files as data frames.
-(note eet means education, employment, and training)
-```{r}
-setwd("/Users/charliedicker/Downloads/data_sets")
+2. The additional list of the least developed countries in the world;
 
-continents <- read.csv("continents-according-to-our-world-in-data.csv")
-gdp_per_capita_df <- read.csv("gdp-per-capita-worldbank.csv")
-youth_not_in_eet <- read.csv("youth-not-in-education-employment-training.csv")
+3. The population of each country for each year in the interval 1960 - 2024 (World Bank, 2025a);
+
+4. The youth unemployment rate (as a percentage of the total labour force) for each country (World Bank, 2025b);
+
+5. The education attainment rate of the population aged 25+ for at least completing an upper secondary education (World Bank, 2025c).
+
+\* *Youth generally would be referred to the individual between age 15-24 *
+```{r importing data, message=FALSE}
+### Please note that if you have directly cloned the GitHub repository, then you
+### can just leave the code as that, **NO need to change working directory**
+
+### And if you would like to add additional files, please just use the path starting
+### with `data_sets` (as below), as ideally the default wd is the IDS_Group_Proj already
+
+continents <- read.csv("data_sets/continents-according-to-our-world-in-data.csv")
+gdp_per_capita_df <- read.csv("data_sets/gdp-per-capita-worldbank.csv")
+youth_not_in_eet <- read.csv("data_sets/youth-not-in-education-employment-training.csv")
 
 # We now create a vector of all LDC countries
 ldc_countries <- c(
@@ -50,60 +63,71 @@ ldc_countries <- c(
   "Vanuatu", "Yemen", "Zambia"
 )
 
-# I downloaded population data off world bank, to calculate gdp
-population_df <- read.csv("population.csv")
+# Importing the population data
+population <- read_csv("data_sets/population.csv", skip = 3)
+
+# Importing the youth unemployment data
+youth_unemployment <- read_csv("data_sets/youth_unemployment.csv",
+  skip = 3
+)
+
+
+# Importing the education Attainment data
+edu_attainment <- read_csv("data_sets/edu_attainment_completed_upper_secondary.csv",
+  skip = 3
+)
 ```
 
+## Original Data Sets Given
 
-We now clean the data, getting rid of any irrelevant data
+We now clean the data, getting rid of any irrelevant data.
 ```{r}
-
-# The year is irrelevant in continents, as the only thing this df needs to be used for is assigning a continent to a country
+# The year is irrelevant in continents, as the only thing this df needs to be
+# used for is assigning a continent to a country
 continents$Year <- NULL
 continents$Entity <- NULL
 
 # We now assign the continent to each country in gdp per capita
-gdp_per_capita_df <- gdp_per_capita_df %>% 
+gdp_per_capita_df <- gdp_per_capita_df %>%
   left_join(continents, by = "Code")
 
 # Same thing for youth not in eet
-youth_not_in_eet <- youth_not_in_eet %>% 
+youth_not_in_eet <- youth_not_in_eet %>%
   left_join(continents, by = "Code")
 
-# The continents table is now redundant
-rm(continents)
+# The continents table is now redundant (Commented this out as when running
+# this code seperately without the previous chunk it would produce error)
 
+# rm(continents)
 
+# We clean population data
 
-# We clean population data, dropping all columns that aren't year and country
-population_df$Series.Name <- NULL
-population_df$Series.Code <- NULL
-population_df$Country.Code <- NULL
-
-
+population <- population %>%
+  # Remove indicator code&name, and the last column which is all NAs
+  select(-`Indicator Code`, -`Indicator Name`, -70) %>%
+  rename(
+    Entity = `Country Name`,
+    Code = `Country Code`
+  ) %>%
+  pivot_longer(
+    cols = 3:67,
+    names_to = "Year",
+    values_to = "Population"
+  )
 ```
 
 
-Still cleaning (renaming columns to nicer names)
+Renaming columns to nicer names
 ```{r}
 # Rename a column in gdp per capita
-gdp_per_capita_df <- gdp_per_capita_df %>% 
+gdp_per_capita_df <- gdp_per_capita_df %>%
   rename(Gdp_per_capita = GDP.per.capita..PPP..constant.2017.international...)
 
 # Rename a column in youth not in eet
-youth_not_in_eet <- youth_not_in_eet %>% 
-  rename(Perc_youth_not_in_eet = Share.of.youth.not.in.education..employment.or.training..total....of.youth.population.)
-
-population_df <- population_df %>%
+youth_not_in_eet <- youth_not_in_eet %>%
   rename(
-    Year_2015 = X2015..YR2015.,
-    Year_2016 = X2016..YR2016.,
-    Year_2017 = X2017..YR2017.,
-    Year_2018 = X2018..YR2018.,
-    Year_2019 = X2019..YR2019.,
-    Year_2020 = X2020..YR2020.,
-    Year_2021 = X2021..YR2021.,
-    Entity = Country.Name
+    Percentage_NEET =
+      Share.of.youth.not.in.education..employment.or.training..total....of.youth.population.
   )
 ```
 
@@ -111,26 +135,11 @@ population_df <- population_df %>%
 Dropping values before the year 2014, and if population data is above 2021, and if continent is NA.
 ```{r}
 # Drop all values before 2014, as these UN goals were set in 2015
-gdp_per_capita_df <- gdp_per_capita_df %>% 
+gdp_per_capita_df <- gdp_per_capita_df %>%
   filter(Year >= 2014 & !is.na(Continent))
 
-youth_not_in_eet <- youth_not_in_eet %>% 
+youth_not_in_eet <- youth_not_in_eet %>%
   filter(Year >= 2014 & !is.na(Continent))
-
-```
-
-
-Here we make population into long format, so that we can join the data frames
-```{r}
-population_df <- population_df %>%
-  pivot_longer(
-    cols = starts_with("Year_"),     
-    names_to = "Year",              
-    values_to = "Population"          
-  ) %>%
-  mutate(
-    Year = as.integer(sub("Year_", "", Year))  # remove "Year_" and make numeric
-  )
 ```
 
 
@@ -138,10 +147,12 @@ population_df <- population_df %>%
 Calculating Economic Growth and change in eet of each country
 ```{r}
 gdp_per_capita_df <- gdp_per_capita_df %>%
-  mutate(Growth = ifelse(lag(Entity) != Entity, NA, (Gdp_per_capita - lag(Gdp_per_capita)) / lag(Gdp_per_capita) * 100))
+  mutate(Growth = ifelse(lag(Entity) != Entity, NA, (Gdp_per_capita - lag(Gdp_per_capita)) /
+    lag(Gdp_per_capita) * 100))
 
 youth_not_in_eet <- youth_not_in_eet %>%
-  mutate(Perc_change = ifelse(lag(Entity) != Entity, NA, (Perc_youth_not_in_eet - lag(Perc_youth_not_in_eet)) / lag(Perc_youth_not_in_eet) * 100))
+  mutate(Perc_Change_NEET = ifelse(lag(Entity) != Entity, NA, (Percentage_NEET -
+    lag(Percentage_NEET)) / lag(Percentage_NEET) * 100))
 ```
 
 
@@ -153,8 +164,8 @@ gdp_per_capita_df <- gdp_per_capita_df %>%
 
 Merging the data frames to include population in both
 ```{r}
-gdp_per_capita_df <- merge(gdp_per_capita_df, population_df, by = c("Entity", "Year"))
-youth_not_in_eet <- merge(youth_not_in_eet, population_df, by = c("Entity", "Year"))
+gdp_per_capita_df <- merge(gdp_per_capita_df, population, by = c("Entity", "Year", "Code"))
+youth_not_in_eet <- merge(youth_not_in_eet, population, by = c("Entity", "Year", "Code"))
 ```
 
 Now we convert to numeric and calculate GDP per capita of each country each year
@@ -167,17 +178,76 @@ gdp_per_capita_df <- gdp_per_capita_df %>%
 
 Finally, export the CSV files of the 2 data frames
 ```{r}
-write.csv(gdp_per_capita_df, "/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data/gdp_per_capita_df.csv", row.names = FALSE)
-write.csv(youth_not_in_eet, "/Users/charliedicker/Documents/Uni/Year 1/R basics (data science)/Coursework/Exported_data/youth_not_in_eet.csv", row.names = FALSE)
+write.csv(gdp_per_capita_df, "Exported_data/gdp_per_capita_cleaned.csv", row.names = FALSE)
+write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = FALSE)
+```
 
+## Additional Data Sets
+
+We now clean the youth unemployment df and the education attainment df.
+
+```{r}
+youth_unemployment <- youth_unemployment %>%
+  # Remove indicator code&name, and the last column which is all NAs
+  select(-`Indicator Code`, -`Indicator Name`, -70) %>%
+  rename(
+    Entity = `Country Name`,
+    Code = `Country Code`
+  ) %>%
+  pivot_longer(
+    cols = 3:67,
+    names_to = "Year",
+    values_to = "Youth_Unemployment"
+  ) %>%
+  filter(Year >= 2014) 
+
+youth_unemployment$Year <- as.numeric(youth_unemployment$Year)
+
+edu_attainment <- edu_attainment %>%
+  # Remove indicator code&name, and the last column which is all NAs
+  select(-`Indicator Code`, -`Indicator Name`, -70) %>%
+  rename(
+    Entity = `Country Name`,
+    Code = `Country Code`
+  ) %>%
+  pivot_longer(
+    cols = 3:67,
+    names_to = "Year",
+    values_to = "Edu_Attainment"
+  ) %>%
+  filter(Year >= 2014) 
+
+edu_attainment$Year <- as.numeric(edu_attainment$Year)
+
+# Merge these two df's into the youth_not_in_eet
+
+youth_not_in_eet <- youth_not_in_eet %>% 
+  left_join(. , edu_attainment, by = c("Code", "Year", "Entity")) %>% 
+  left_join(. , youth_unemployment, by  = c("Code", "Year", "Entity"))
+
+write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = FALSE)
 ```
 
 
+\newpage
 
+# Reference
 
+World Bank (2025c). Educational attainment, at least completed upper secondary, population 25+, total (%) (cumulative) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.SEC.CUAT.UP.ZS [Accessed 1 Dec. 2025].
 
+World Bank (2025a). Population, Total. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SP.POP.TOTL [Accessed 1 Dec. 2025].
 
-REF:
+World Bank (2025b). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
+
+# LLM Usage
+
 25/11/2025 asked ChatGPT "what would the definition of "least developed countries" mean in terms of gdp per capita (PPP)"
 
 26/11/2025 asked ChatGPT "give me a list of all countries the UN considers LDCs between 2015 and 2021, with each country in quotation marks seperated by commas"
+
+# Limitation of the Data Sets
+
+1. For the Youth NEET data set, there is no data for China, which may lead to a 
+large error for conclusion drawn for Asia
+
+
