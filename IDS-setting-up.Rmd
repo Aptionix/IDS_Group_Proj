@@ -126,7 +126,7 @@ gdp_per_capita_df <- gdp_per_capita_df %>%
 # Rename a column in youth not in eet
 youth_not_in_eet <- youth_not_in_eet %>%
   rename(
-    Perc_youth_not_in_eet =
+    Percentage_NEET =
       Share.of.youth.not.in.education..employment.or.training..total....of.youth.population.
   )
 ```
@@ -151,8 +151,8 @@ gdp_per_capita_df <- gdp_per_capita_df %>%
     lag(Gdp_per_capita) * 100))
 
 youth_not_in_eet <- youth_not_in_eet %>%
-  mutate(Perc_change = ifelse(lag(Entity) != Entity, NA, (Perc_youth_not_in_eet -
-    lag(Perc_youth_not_in_eet)) / lag(Perc_youth_not_in_eet) * 100))
+  mutate(Perc_Change_NEET = ifelse(lag(Entity) != Entity, NA, (Percentage_NEET -
+    lag(Percentage_NEET)) / lag(Percentage_NEET) * 100))
 ```
 
 
@@ -244,3 +244,10 @@ World Bank (2025b). Unemployment, Youth Total (% of Total Labor Force Ages 15-24
 25/11/2025 asked ChatGPT "what would the definition of "least developed countries" mean in terms of gdp per capita (PPP)"
 
 26/11/2025 asked ChatGPT "give me a list of all countries the UN considers LDCs between 2015 and 2021, with each country in quotation marks seperated by commas"
+
+# Limitation of the Data Sets
+
+1. For the Youth NEET data set, there is no data for China, which may lead to a 
+large error for conclusion drawn for Asia
+
+
