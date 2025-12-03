@@ -1,4 +1,4 @@
-"Entity","Year","Code","Perc_youth_not_in_eet","Continent","Perc_change","Population","Edu_Attainment","Youth_Unemployment"
+"Entity","Year","Code","Percentage_NEET","Continent","Perc_Change_NEET","Population","Edu_Attainment","Youth_Unemployment"
 "Afghanistan",2014,"AFG",35.06,"Asia",NA,32792523,9.698486925384,10.094
 "Afghanistan",2017,"AFG",42.84,"Asia",22.1905305191101,35688935,11.7771822147423,17.31
 "Afghanistan",2020,"AFG",53.76,"Asia",25.4901960784314,39068979,11.8347043333891,16.053

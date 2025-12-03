@@ -1,14 +1,17 @@
 ---
-title: "Question 1 Task 2"
+title: "Introduction to Data Science Group Project Task 2"
 author: "K9"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
+# !!! NOTE THAT: by defalt, in the pdf file generated, it does not show the code
+# chunk, if want to show chunk, change the line below to **echo = TRUE**
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(ggplot2)
+library(knitr)
 ```
 
 In this section, we will discuss the extent each continent working toward the goal
@@ -19,35 +22,43 @@ We would first draw a graph to demonstrate the change of NEET for each continent
 with the year using the line graph.
 
 ```{r import data}
-youth_not_eet <- read.csv("Exported_data/youth_neet_cleaned.csv") %>% 
-  rename("Percentage" = "Perc_youth_not_in_eet")
+youth_neet <- read.csv("Exported_data/youth_neet_cleaned.csv")
 ```
 
 ```{r Continent NEET against Year (line chart)}
-youth_not_eet %>%
+youth_neet %>%
   group_by(Continent, Year) %>%
-  summarise(NEET_avg = weighted.mean(Percentage, Population)) %>%
-  ungroup() %>% 
+  summarise(
+    NEET_avg = weighted.mean(Percentage_NEET, Population, na.rm = T),
+    .groups = "drop"
+  ) %>%
   ggplot(aes(x = Year, y = NEET_avg, colour = Continent)) +
   geom_point() +
-  geom_line() + 
-  labs(x = "Year", 
-       y = "Percentage",
-       title = "Comparison of NEET")+
-  theme_minimal()+
-  theme(plot.title = element_text(size = 12,
-                                  hjust = 0))
+  geom_line() +
+  labs(
+    x = "Year",
+    y = "Percentage",
+    title = "Comparison of NEET"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(
+    size = 12,
+    hjust = 0
+  ))
 ```
+
+\newpage
 
 We then would like to see the regression line for the NEET.
 
 ```{r Continent NEET against Year (regression), message= FALSE}
-
-youth_summary <- youth_not_eet %>%
+youth_summary <- youth_neet %>%
   group_by(Continent, Year) %>%
   # Use na.rm = TRUE in weighted.mean to handle missing data
-  summarise(NEET_avg = weighted.mean(Percentage, Population, na.rm = TRUE)) %>% 
-  ungroup()
+  summarise(
+    NEET_avg = weighted.mean(Percentage_NEET, Population, na.rm = TRUE),
+    .groups = "drop"
+  )
 
 # Define the color mapping vector
 continent_colors <- c(
@@ -64,26 +75,28 @@ slope_data <- youth_summary %>%
   do({
     lm_fit <- lm(NEET_avg ~ Year, data = .)
     tidy_fit <- broom::tidy(lm_fit)
-    
+
     slope_stats <- tidy_fit %>% filter(term == "Year")
     slope <- slope_stats$estimate
 
     p_value <- slope_stats$p.value
-    
+
     # Determine the significance notation based on standard alpha levels (0.05, 0.01, 0.001)
     significance_label <- case_when(
       p_value < 0.001 ~ "(p < 0.001)",
-      p_value < 0.01 ~ "(p < 0.01)",  
+      p_value < 0.01 ~ "(p < 0.01)",
       p_value < 0.05 ~ "(p < 0.05)",
-      TRUE ~ " (n.s.)"                      # Not significant (p >= 0.05)
+      TRUE ~ " (n.s.)" # Not significant (p >= 0.05)
     )
-    
+
     # Create the final annotation label string, including the formatted slope and significance
-    slope_label <- sprintf("Slope: %s%.3f %s",
-                           ifelse(slope >= 0, "+", ""), # Add a '+' sign for positive slopes
-                           slope,
-                           significance_label)
-    
+    slope_label <- sprintf(
+      "Slope: %s%.3f %s",
+      ifelse(slope >= 0, "+", ""), # Add a '+' sign for positive slopes
+      slope,
+      significance_label
+    )
+
     data.frame(
       Continent = unique(.$Continent),
       slope_label = slope_label
@@ -96,49 +109,125 @@ slope_data <- youth_summary %>%
 # 2. Create the combined plot using facet_wrap
 combined_plot <- ggplot(youth_summary, aes(x = Year, y = NEET_avg)) +
   geom_point(aes(colour = Continent), alpha = 0.7, size = 3) +
-  geom_smooth(aes(colour = Continent, fill = Continent), method = "lm", se = TRUE, linewidth = 1) +
-  geom_text(data = slope_data,
-            aes(label = slope_label, colour = Continent),
-            x = -Inf, y = Inf,
-            hjust = -0.1, vjust = 1.2,
-            size = 3.5, fontface = "bold") +
+  geom_smooth(aes(colour = Continent, fill = Continent),
+    method = "lm",
+    se = TRUE, linewidth = 1
+  ) +
+  geom_text(
+    data = slope_data,
+    aes(label = slope_label, colour = Continent),
+    x = -Inf, y = Inf,
+    hjust = -0.1, vjust = 1.2,
+    size = 3.5, fontface = "bold"
+  ) +
   scale_colour_manual(values = continent_colors) +
   scale_fill_manual(values = continent_colors) +
-
-  facet_wrap(~ Continent,
-             scales = "free_y") +
-  labs( x = "Year",
-        y = "Weighted Average Percentage",
-        title = "Youth Not in EET: Trend by Continent") +
+  facet_wrap(~Continent,
+    scales = "free_y"
+  ) +
+  labs(
+    x = "Year",
+    y = "Weighted Average Percentage",
+    title = "Youth Not in EET: Trend by Continent"
+  ) +
   theme_minimal() +
   theme(
     plot.title = element_text(size = 14, hjust = 0),
-    legend.position = "none",                       
-    strip.text = element_text(size = 10, face = "bold") 
+    legend.position = "none",
+    strip.text = element_text(size = 10, face = "bold")
   )
 
 # Display the final combined plot object
 combined_plot
 ```
 
-Then we would like to see how education and employment each contribute to the NEET
+\newpage
 
-```{r Contribution to NEET}
-youth_summary <- youth
+Then we would like to see how education and employment each contribute to the NEET, 
+one would create a table to illustrate how they correlated
 
+```{r Contribution to NEET, message=FALSE}
+# First, we merge the Education Attainment and youth unemployment data into the
+# youth summary data frame. Ignore NAs so that the weighted average calculation
+# would be more calculating from the rest of the data.
+youth_summary <- youth_neet %>%
+  group_by(Continent, Year) %>%
+  summarise(
+    EA_avg = weighted.mean(Edu_Attainment, Population, na.rm = TRUE),
+    Unemp_avg = weighted.mean(Youth_Unemployment, Population, na.rm = T),
+    .groups = "keep"
+  ) %>%
+  right_join(., youth_summary) %>%
+  ungroup()
+
+
+# Then we would like to calculate the correlation between NEET rate and education
+# attainment rate and youth unemployment rate.
+
+# I used AI for this part, specifically how to turn the cor.test() result into
+# a data frame.
+
+Cor_NEET_Con <- (function() {
+  EA_corr <- youth_summary %>%
+    group_by(Continent) %>%
+    summarise(
+      test = list(cor.test(NEET_avg, EA_avg, method = "spearman"))
+    ) %>%
+    mutate(
+      Corr_EA = map_dbl(test, ~ round(.x$estimate, 4)),
+      P_Value_EA = map_dbl(test, ~ round(.x$p.value, 4))
+    ) %>%
+    select(-test)
+
+  Unemp_corr <- youth_summary %>%
+    group_by(Continent) %>%
+    summarise(
+      test = list(cor.test(NEET_avg, Unemp_avg, method = "spearman"))
+    ) %>%
+    mutate(
+      Corr_Unemp = map_dbl(test, ~ round(.x$estimate, 4)),
+      P_Value_Unemp = map_dbl(test, ~ round(.x$p.value, 4))
+    ) %>%
+    select(-test)
+
+  full_join(
+    EA_corr, Unemp_corr,
+    by = "Continent"
+  )
+})()
+
+kable(Cor_NEET_Con,
+  format = "markdown",
+  caption = "Correlation of NEET with Youth Unemployment and Education Attainment (Continental)"
+)
 ```
 
+If we do not group the data by continent rather seeing them as a whole,then we 
+get the following table
 
+```{r, warning=FALSE}
+Cor_NEET_World <- (function() {
+  NEET_EA <- cor.test(youth_neet$Percentage_NEET,
+    youth_neet$Edu_Attainment,
+    method = "spearman",
+    use = "complete.obs"
+  )
 
+  NEET_Unemp <- cor.test(youth_neet$Percentage_NEET,
+    youth_neet$Youth_Unemployment,
+    method = "spearman",
+    use = "complete.obs",
+  )
+  
+  data.frame(
+    variable = c("EA", "Unemployment"),
+    correlation = round(c(NEET_Unemp$estimate, NEET_EA$estimate), 4),
+    p_value = round(c(NEET_Unemp$p.value, NEET_EA$p.value), 4)
+  )
+})()
 
-
-
-
-
-
-
-
-
-
-
-
+kable(Cor_NEET_World,
+  format = "markdown",
+  caption = "Correlation of NEET with Youth Unemployment and Education Attainment (World)"
+)
+```
