@@ -161,9 +161,7 @@ ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
 
 ```
 
-Waiiittttt on the y axis what exactly should i put? gdp, gdp per capita or growth???
-
-7 do a weighted average of ldc growth rate for each contine, then plot a graph of each continent and how they compare
+Do a weighted average of ldc growth rate for each contine, then plot a graph of each continent and how they compare
 
 ```{r}
 ldc_weighted <- ldc %>%
@@ -183,6 +181,37 @@ ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, colour = Continent)) +
 
 
 ```
+
+Identify which LDCs have had a growth that reached 7% and plot their growth
+
+```{r}
+ldc_7 <- ldc %>%
+  group_by(Entity) %>%
+  filter(any(Growth >= 7)) %>%
+  ungroup()
+
+ggplot (ldc_7, aes(x = Year, y = Growth, color = Entity)) + 
+          geom_line() + 
+          facet_wrap (~ Continent) +
+          theme_minimal() + 
+          labs(
+            title = "GDP Growth of LDC that reached 7%",
+            x = "Year",
+            y = "GDP Growth(%)"
+          )
+```
+
+
+REF:
+
+28/11/2025 - asked ChatGPT - "“I have a facet plot in ggplot with some continents having tons of lines and some only one. How can I adjust the y-axis scales so each graph uses the right space for its lines and they don’t look squished or empty?"
+
+
+
+
+
+
+
 
 
 #Find the 3 countries with most GDP growth, and 3 countries with most GDP decline 
@@ -242,8 +271,4 @@ ggplot(filtered_df, aes(x = Year, y = Gdp, colour = Entity)) +
 
 
 
-
-REF:
-
-28/11/2025 - asked ChatGPT - "“I have a facet plot in ggplot with some continents having tons of lines and some only one. How can I adjust the y-axis scales so each graph uses the right space for its lines and they don’t look squished or empty?"
 
