@@ -33,9 +33,9 @@ In the first chunk, we would import the following data:
 
 3. The population of each country for each year in the interval 1960 - 2024 (World Bank, 2025a);
 
-4. The youth unemployment rate (as a percentage of the total labour force) for each country (World Bank, 2025b);
+4. The youth unemployment rate (as a percentage of the total labour force) for each country (World Bank, 2025c);
 
-5. The education attainment rate of the population aged 25+ for at least completing an upper secondary education (World Bank, 2025c).
+5. The school enrollment rate of for tertiary education (World Bank, 2025b).
 
 \* *Youth generally would be referred to the individual between age 15-24 *
 ```{r importing data, message=FALSE}
@@ -73,7 +73,7 @@ youth_unemployment <- read_csv("data_sets/youth_unemployment.csv",
 
 
 # Importing the education Attainment data
-edu_attainment <- read_csv("data_sets/edu_attainment_completed_upper_secondary.csv",
+school_enrollment <- read_csv("data_sets/school_enrollment.csv",
   skip = 3
 )
 ```
@@ -173,7 +173,7 @@ write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = 
 
 ## Additional Data Sets
 
-We now clean the youth unemployment df and the education attainment df.
+We now clean the youth unemployment df and the school enrollment df.
 
 ```{r}
 youth_unemployment <- youth_unemployment %>%
@@ -191,7 +191,7 @@ youth_unemployment <- youth_unemployment %>%
 
 youth_unemployment$Year <- as.numeric(youth_unemployment$Year)
 
-edu_attainment <- edu_attainment %>%
+school_enrollment <- school_enrollment %>%
   # Remove indicator code&name, and the last column which is all NAs
   select(-`Indicator Code`, -`Indicator Name`, -70) %>%
   rename(
@@ -201,15 +201,15 @@ edu_attainment <- edu_attainment %>%
   pivot_longer(
     cols = 3:67,
     names_to = "Year",
-    values_to = "Edu_Attainment"
+    values_to = "School_Enrollment"
   )
 
-edu_attainment$Year <- as.numeric(edu_attainment$Year)
+school_enrollment$Year <- as.numeric(school_enrollment$Year)
 
 # Merge these two df's into the youth_not_in_eet
 
 youth_not_in_eet <- youth_not_in_eet %>% 
-  left_join(. , edu_attainment, by = c("Code", "Year", "Entity")) %>% 
+  left_join(. , school_enrollment, by = c("Code", "Year", "Entity")) %>% 
   left_join(. , youth_unemployment, by  = c("Code", "Year", "Entity"))
 
 write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = FALSE)
@@ -220,11 +220,11 @@ write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = 
 
 # Reference
 
-World Bank (2025c). Educational attainment, at least completed upper secondary, population 25+, total (%) (cumulative) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.SEC.CUAT.UP.ZS [Accessed 1 Dec. 2025].
-
 World Bank (2025a). Population, Total. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SP.POP.TOTL [Accessed 1 Dec. 2025].
 
-World Bank (2025b). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
+World Bank (2025b). School enrollment, tertiary (% gross) . [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.TER.ENRR?end=2024&start=1970&view=chart [Accessed 4 Dec. 2025].
+
+World Bank (2025c). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
 
 # LLM Usage
 
