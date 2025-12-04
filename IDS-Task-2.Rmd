@@ -191,7 +191,10 @@ Cor_NEET_Con <- (function() {
   SE_corr <- youth_summary %>%
     group_by(Continent) %>%
     summarise(
-      test = list(cor.test(NEET_avg, SE_avg, method = "spearman"))
+      test = list(cor.test(
+        NEET_avg, SE_avg, method = "spearman",use = "complete.obs"
+        )
+      )
     ) %>%
     mutate(
       Corr_SE = map_dbl(test, ~ round(.x$estimate, 4)),
@@ -202,7 +205,10 @@ Cor_NEET_Con <- (function() {
   Unemp_corr <- youth_summary %>%
     group_by(Continent) %>%
     summarise(
-      test = list(cor.test(NEET_avg, Unemp_avg, method = "spearman"))
+      test = list(cor.test(
+        NEET_avg, Unemp_avg, method = "spearman", use = "complete.obs"
+        )
+      )
     ) %>%
     mutate(
       Corr_Unemp = map_dbl(test, ~ round(.x$estimate, 4)),
@@ -221,7 +227,6 @@ kable(Cor_NEET_Con,
   caption = "Correlation of NEET with Youth Unemployment and School Enrollment (Continental)"
 )
 ```
-
 If we do not group the data by continent rather seeing them as a whole,then we 
 get the following table
 
@@ -250,7 +255,21 @@ kable(Cor_NEET_World,
   format = "markdown",
   caption = "Correlation of NEET with Youth Unemployment and School Enrollment (World)"
 )
+
 ```
+
+```{r correlation plot NEET v.s. SE and Unemp, warning=FALSE}
+youth_neet %>% ggplot(aes(x = Percentage_NEET, y = School_Enrollment)) +
+  geom_point(alpha = 0.4) + 
+  geom_smooth(method = "lm")+
+  theme_minimal()
+
+youth_neet %>% ggplot(aes(x = Percentage_NEET, y = Youth_Unemployment)) +
+  geom_point(alpha = 0.4) + 
+  geom_smooth(method = "lm")+
+  theme_minimal()
+```
+The below code chunks would be focus on the correlation between NEET and GDP per head.
 
 ```{r merge GDP and NEET}
 gdp_neet <- inner_join(gdp, youth_neet, by = c("Entity", "Code", "Year", "Continent"))
