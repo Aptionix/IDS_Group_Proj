@@ -152,6 +152,14 @@ This chunk is now to add a flag to the gdp per capita dataframe, labelling if a 
 ```{r}
 gdp_per_capita_df <- gdp_per_capita_df %>%
   mutate(Ldc = Entity %in% ldc_countries)
+
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Ldc = ("Equatorial Guinea" %in% ldc_countries) & Year < 2017)
+
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Ldc = ("Vanuatu" %in% ldc_countries) & Year <= 2020)
+
+
 ```
 
 Merging the data frames to include population in both
@@ -228,6 +236,8 @@ World Bank (2025a). Population, Total. [online] World Bank Open Data. Available 
 World Bank (2025b). School enrollment, tertiary (% gross) . [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.TER.ENRR?end=2024&start=1970&view=chart [Accessed 4 Dec. 2025].
 
 World Bank (2025c). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
+
+List of LDCs, and when they graduated. Available at: https://unctad.org/system/files/official-document/ldcr2021_what_are_ldcs_en.pdf [Accessed 1 Dec. 2025]
 
 # LLM Usage
 
