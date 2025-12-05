@@ -50,6 +50,9 @@ gdp_per_capita_df <- read.csv("data_sets/gdp-per-capita-worldbank.csv")
 youth_not_in_eet <- read.csv("data_sets/youth-not-in-education-employment-training.csv")
 
 # We now create a vector of all LDC countries
+# ref: https://unctad.org/system/files/official-document/ldcr2021_what_are_ldcs_en.pdf
+# note, 2 countries graduated from LDC status in this period, Equatorial Guinea in June 2017; and Vanuatu in December 2020. We will analyse them on their own later
+
 ldc_countries <- c(
   "Afghanistan", "Angola", "Bangladesh", "Benin", "Bhutan", "Burkina Faso",
   "Burundi", "Cambodia", "Central African Republic", "Chad", "Comoros",
