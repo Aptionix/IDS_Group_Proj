@@ -19,6 +19,8 @@ library(ggplot2)
 Set WD and import data
 ```{r}
 gdp_per_capita_df <- read.csv("Exported_data/gdp_per_capita_cleaned.csv")
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  filter(Year >= 2015)
 ```
 
 
@@ -113,13 +115,13 @@ Plotting the graphs
 continents_growth_df %>% ggplot(aes(x = Year, y = Weighted_Growth_Index, colour = Continent)) +
   geom_point() +
   geom_line() +
-  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 1) +
   labs(title = "GDP Growth Index (weighted)/Year for 6 continents", y = "GDP Growth (%)")
 
 continents_growth_df %>% ggplot(aes(x = Year, y = Avg_Growth_Index, colour = Continent)) +
   geom_point() +
   geom_line() +
-  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 1) +
   labs(title = "GDP Growth Index (avg)/Year for 6 continents", y = "GDP Growth (%)")
 ```
 
