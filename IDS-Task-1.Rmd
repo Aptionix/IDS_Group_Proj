@@ -144,20 +144,28 @@ REF:
 
 
 
-Plot ldc growth, each separate country in a  certain continent (6 graphs)
-Create a ldc database
+
+Create an LDC database
 
 ```{r}
 ldc <- gdp_per_capita_df %>%
   filter (Ldc == TRUE)
 ```
 
-Plot the graphs
-
+Plot GDP growth by continent
 ```{r}
 ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
   geom_line() +
   facet_wrap(~ Continent) +
+  theme_minimal() +
+  labs(
+    title = "GDP Growth of LDCs by Continent",
+    x = "Year",
+    y = "GDP Growth (%)"
+  )
+```
+
+Compute the weighted average GDP growth for each continent
   geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
   geom_hline(yintercept = 0, linetype = "dashed") +
   theme(legend.position = "none")
@@ -169,17 +177,27 @@ Do a normal and a weighted average of ldc growth rate for each continent, then p
 ```{r}
 ldc_weighted <- ldc %>%
   group_by(Year, Continent) %>%
-  mutate(
-    weighted_growth = sum(Gdp_per_capita * Growth, na.rm = TRUE) / sum(Gdp_per_capita, na.rm = TRUE)
-  ) %>%
-  ungroup()
+  summarise(
+    weighted_growth =
+      sum(Gdp_per_capita * Growth, na.rm = TRUE) /
+      sum(Gdp_per_capita, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
 
-ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, colour = Continent)) +
+Plot weighted GDP growth by continent with a 7% reference line
+
+```{r}
+ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, color = Continent)) +
   geom_line() +
-  geom_point() +
-  facet_wrap(~ Continent) +
-  theme(legend.position = "none") +
+  facet_wrap(~ Continent, scales = "free_y") +
   geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
+  theme_minimal() +
+  labs(
+    title = "Weighted GDP Growth of LDCs by Continent",
+    x = "Year",
+    y = "Weighted GDP Growth (%)"
+  )
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
   labs(y = "Weighted Growth (%)")
 
@@ -203,6 +221,7 @@ ggplot(ldc_avg_growth, aes(x = Year, y = Avg_growth, colour = Continent)) +
 
 ```
 
+
 Identify which LDCs have had a growth that reached 7% and plot their growth
 
 ```{r}
@@ -210,18 +229,32 @@ ldc_7 <- ldc %>%
   group_by(Entity) %>%
   filter(any(Growth >= 7)) %>%
   ungroup()
-
-ggplot (ldc_7, aes(x = Year, y = Growth, color = Entity)) + 
-          geom_line() + 
-          facet_wrap (~ Continent) +
-          theme_minimal() + 
-          labs(
-            title = "GDP Growth of LDC that reached 7%",
-            x = "Year",
-            y = "GDP Growth(%)"
-          )
 ```
 
+Plot their graph
+
+```{r}
+ggplot (ldc_7, aes(x = Year, y = Growth, color = Entity)) + 
+  geom_line() + 
+  facet_wrap (~ Continent) +
+  theme_minimal() + 
+  labs(
+    title = "GDP Growth of LDCs that reached 7%",
+    x = "Year",
+    y = "GDP Growth(%)"
+  )
+```
+
+
+
+Determine which countries have had the highest growth over the years
+
+```{r}
+ldc %>%
+  group_by(Entity) %>%
+  summarise(avg_growth = mean(Growth, na.rm = TRUE)) %>%
+  arrange(desc(avg_growth)) 
+```  
 
 REF:
 
