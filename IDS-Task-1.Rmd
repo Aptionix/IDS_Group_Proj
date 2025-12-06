@@ -275,6 +275,37 @@ ggplot(filtered_df, aes(x = Year, y = Gdp, colour = Entity)) +
 #free y scaling - allows the y-axis of a plot to vary independently for each row of facets
 ```
 
+
+
+
+Graph to see if china and india are the drivers of asias growth
+```{r}
+# Filter for China and India
+china_india <- gdp_per_capita_df %>%
+  filter(Entity %in% c("China", "India")) %>%
+  rename(Growth = Growth)
+
+# Filter for Asia
+asia_growth <- continents_growth_df %>%
+  filter(Continent == "Asia") %>%
+  rename(Growth = Avg_Growth) %>%
+  mutate(Entity = "Asia (Avg)")
+
+# Combine datasets
+asia_growth <- bind_rows(
+  china_india,
+  asia_growth
+)
+
+asia_growth %>% ggplot(aes(x = Year, y = Growth, colour = Entity)) +
+  geom_point() +
+  geom_line() +
+  labs(title = "Comparing Asia's average growth with China and Indias growth", y = "Growth (%)")
+
+```
+
+
+
 ANALYSIS
 Africa: Nigeria, South Africa, Algeria
 Asia: China, India, Japan
