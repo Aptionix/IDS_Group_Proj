@@ -108,18 +108,18 @@ slope_neet_year <- slope_neet_year %>%
 
 # Display comparison table
 # Shows side-by-side results for hypothesis testing
-kable(
-  slope_neet_year %>%
-    select(
-      Continent,
-      `Slope` = slope,
-      `P-value` = p,
-      `Significance` = sig_label,
-      `Significant at 5%? (with)` = significance
-    ),
-  digits = 4,
-  caption = "Hypothesis Testing Results: With and Without Outliers (IQR multiplier: 1.0)"
-)
+# kable(
+#   slope_neet_year %>%
+#     select(
+#       Continent,
+#       `Slope` = slope,
+#       `P-value` = p,
+#       `Significance` = sig_label,
+#       `Significant at 5%? (with)` = significance
+#     ),
+#   digits = 4,
+#   caption = "Hypothesis Testing Results: With and Without Outliers (IQR multiplier: 1.0)"
+# )
 
 
 # Prepare slope annotations for visualization
@@ -260,14 +260,30 @@ kable(Cor_NEET_World,
 
 ```{r correlation plot NEET v.s. SE and Unemp, warning=FALSE}
 youth_neet %>% ggplot(aes(x = Percentage_NEET, y = School_Enrollment)) +
-  geom_point(alpha = 0.4) + 
+  geom_point(aes(colour = Continent), alpha = 0.4) + 
   geom_smooth(method = "lm")+
-  theme_minimal()
+  theme_minimal()+
+  labs(
+    title = "School Enrolment (Tertiary) and NEET Percentage Comparison",
+    y = "School Enrolment (%)",
+    x = "NEET (%)"
+  )
+
+# Note that for some country the school enrolment rate is beyond 100%, that is not
+# an error actually. As that percentage is calculated by 
+# total population in tertiary education (irrespective of age) / offcial age for tertiary edu
+# so making it possible, like Greece.
 
 youth_neet %>% ggplot(aes(x = Percentage_NEET, y = Youth_Unemployment)) +
-  geom_point(alpha = 0.4) + 
+  geom_point(aes(colour = Continent), alpha = 0.4) + 
   geom_smooth(method = "lm")+
-  theme_minimal()
+  theme_minimal()+
+  labs(
+    title = "Youth Unemployment and NEET Percentage Comparison",
+    y = "Youth Unemployment (%)",
+    x = "NEET (%)"
+  )
+  
 ```
 The below code chunks would be focus on the correlation between NEET and GDP per head.
 
