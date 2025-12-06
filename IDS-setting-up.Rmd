@@ -154,10 +154,14 @@ gdp_per_capita_df <- gdp_per_capita_df %>%
   mutate(Ldc = Entity %in% ldc_countries)
 
 gdp_per_capita_df <- gdp_per_capita_df %>%
-  mutate(Ldc = ("Equatorial Guinea" %in% ldc_countries) & Year < 2017)
+  mutate(Ldc = if_else(Entity == "Equatorial Guinea" & Year < 2017,
+                       TRUE,
+                       Ldc))
 
 gdp_per_capita_df <- gdp_per_capita_df %>%
-  mutate(Ldc = ("Vanuatu" %in% ldc_countries) & Year <= 2020)
+  mutate(Ldc = if_else(Entity == "Vanuatu" & Year < 2021,
+                       TRUE,
+                       Ldc))
 
 
 ```
