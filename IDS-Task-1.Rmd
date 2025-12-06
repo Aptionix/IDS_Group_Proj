@@ -166,13 +166,6 @@ ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
 ```
 
 Compute the weighted average GDP growth for each continent
-  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  theme(legend.position = "none")
-
-```
-
-Do a normal and a weighted average of ldc growth rate for each continent, then plot a graph of each continent and how they compare
 
 ```{r}
 ldc_weighted <- ldc %>%
@@ -198,27 +191,6 @@ ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, color = Continent)) +
     x = "Year",
     y = "Weighted GDP Growth (%)"
   )
-  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
-  labs(y = "Weighted Growth (%)")
-
-
-ldc_avg_growth <- ldc %>%
-  group_by(Year, Continent) %>%
-  mutate(
-    Avg_growth = mean(Growth, na.rm = TRUE)
-  ) %>%
-  ungroup()
-
-ggplot(ldc_avg_growth, aes(x = Year, y = Avg_growth, colour = Continent)) +
-  geom_line() +
-  geom_point() +
-  facet_wrap(~ Continent) +
-  theme(legend.position = "none") +
-  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
-  labs(y = "Average Growth (%)")
-
-
 ```
 
 
@@ -259,8 +231,6 @@ ldc %>%
 REF:
 
 28/11/2025 - asked ChatGPT - "“I have a facet plot in ggplot with some continents having tons of lines and some only one. How can I adjust the y-axis scales so each graph uses the right space for its lines and they don’t look squished or empty?"
-
-
 
 
 
