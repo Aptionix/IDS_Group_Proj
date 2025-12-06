@@ -33,9 +33,9 @@ In the first chunk, we would import the following data:
 
 3. The population of each country for each year in the interval 1960 - 2024 (World Bank, 2025a);
 
-4. The youth unemployment rate (as a percentage of the total labour force) for each country (World Bank, 2025b);
+4. The youth unemployment rate (as a percentage of the total labour force) for each country (World Bank, 2025c);
 
-5. The education attainment rate of the population aged 25+ for at least completing an upper secondary education (World Bank, 2025c).
+5. The school enrollment rate of for tertiary education (World Bank, 2025b).
 
 \* *Youth generally would be referred to the individual between age 15-24 *
 ```{r importing data, message=FALSE}
@@ -50,6 +50,9 @@ gdp_per_capita_df <- read.csv("data_sets/gdp-per-capita-worldbank.csv")
 youth_not_in_eet <- read.csv("data_sets/youth-not-in-education-employment-training.csv")
 
 # We now create a vector of all LDC countries
+# ref: https://unctad.org/system/files/official-document/ldcr2021_what_are_ldcs_en.pdf
+# note, 2 countries graduated from LDC status in this period, Equatorial Guinea in June 2017; and Vanuatu in December 2020. We will analyse them on their own later
+
 ldc_countries <- c(
   "Afghanistan", "Angola", "Bangladesh", "Benin", "Bhutan", "Burkina Faso",
   "Burundi", "Cambodia", "Central African Republic", "Chad", "Comoros",
@@ -73,7 +76,7 @@ youth_unemployment <- read_csv("data_sets/youth_unemployment.csv",
 
 
 # Importing the education Attainment data
-edu_attainment <- read_csv("data_sets/edu_attainment_completed_upper_secondary.csv",
+school_enrollment <- read_csv("data_sets/school_enrollment.csv",
   skip = 3
 )
 ```
@@ -132,17 +135,6 @@ youth_not_in_eet <- youth_not_in_eet %>%
 ```
 
 
-Dropping values before the year 2014, and if population data is above 2021, and if continent is NA.
-```{r}
-# Drop all values before 2014, as these UN goals were set in 2015
-gdp_per_capita_df <- gdp_per_capita_df %>%
-  filter(Year >= 2014 & !is.na(Continent))
-
-youth_not_in_eet <- youth_not_in_eet %>%
-  filter(Year >= 2014 & !is.na(Continent))
-```
-
-
 
 Calculating Economic Growth and change in eet of each country
 ```{r}
@@ -160,6 +152,18 @@ This chunk is now to add a flag to the gdp per capita dataframe, labelling if a 
 ```{r}
 gdp_per_capita_df <- gdp_per_capita_df %>%
   mutate(Ldc = Entity %in% ldc_countries)
+
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Ldc = if_else(Entity == "Equatorial Guinea" & Year < 2017,
+                       TRUE,
+                       Ldc))
+
+gdp_per_capita_df <- gdp_per_capita_df %>%
+  mutate(Ldc = if_else(Entity == "Vanuatu" & Year < 2021,
+                       TRUE,
+                       Ldc))
+
+
 ```
 
 Merging the data frames to include population in both
@@ -184,7 +188,7 @@ write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = 
 
 ## Additional Data Sets
 
-We now clean the youth unemployment df and the education attainment df.
+We now clean the youth unemployment df and the school enrollment df.
 
 ```{r}
 youth_unemployment <- youth_unemployment %>%
@@ -198,12 +202,11 @@ youth_unemployment <- youth_unemployment %>%
     cols = 3:67,
     names_to = "Year",
     values_to = "Youth_Unemployment"
-  ) %>%
-  filter(Year >= 2014) 
+  )
 
 youth_unemployment$Year <- as.numeric(youth_unemployment$Year)
 
-edu_attainment <- edu_attainment %>%
+school_enrollment <- school_enrollment %>%
   # Remove indicator code&name, and the last column which is all NAs
   select(-`Indicator Code`, -`Indicator Name`, -70) %>%
   rename(
@@ -213,16 +216,15 @@ edu_attainment <- edu_attainment %>%
   pivot_longer(
     cols = 3:67,
     names_to = "Year",
-    values_to = "Edu_Attainment"
-  ) %>%
-  filter(Year >= 2014) 
+    values_to = "School_Enrollment"
+  )
 
-edu_attainment$Year <- as.numeric(edu_attainment$Year)
+school_enrollment$Year <- as.numeric(school_enrollment$Year)
 
 # Merge these two df's into the youth_not_in_eet
 
 youth_not_in_eet <- youth_not_in_eet %>% 
-  left_join(. , edu_attainment, by = c("Code", "Year", "Entity")) %>% 
+  left_join(. , school_enrollment, by = c("Code", "Year", "Entity")) %>% 
   left_join(. , youth_unemployment, by  = c("Code", "Year", "Entity"))
 
 write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = FALSE)
@@ -233,11 +235,13 @@ write.csv(youth_not_in_eet, "Exported_data/youth_neet_cleaned.csv", row.names = 
 
 # Reference
 
-World Bank (2025c). Educational attainment, at least completed upper secondary, population 25+, total (%) (cumulative) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.SEC.CUAT.UP.ZS [Accessed 1 Dec. 2025].
-
 World Bank (2025a). Population, Total. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SP.POP.TOTL [Accessed 1 Dec. 2025].
 
-World Bank (2025b). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
+World Bank (2025b). School enrollment, tertiary (% gross) . [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SE.TER.ENRR?end=2024&start=1970&view=chart [Accessed 4 Dec. 2025].
+
+World Bank (2025c). Unemployment, Youth Total (% of Total Labor Force Ages 15-24) (modeled ILO estimate) | Data. [online] World Bank Open Data. Available at: https://data.worldbank.org/indicator/SL.UEM.1524.ZS [Accessed 1 Dec. 2025].
+
+List of LDCs, and when they graduated. Available at: https://unctad.org/system/files/official-document/ldcr2021_what_are_ldcs_en.pdf [Accessed 1 Dec. 2025]
 
 # LLM Usage
 
