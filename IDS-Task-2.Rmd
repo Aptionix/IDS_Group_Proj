@@ -69,7 +69,7 @@ continent_colors <- c(
   "Asia"          = "#B79F00",
   "Europe"        = "#00BA38",
   "North America" = "#00BFC4",
-  "Oceania"       = "#619CFF",
+  "Oceania"       = "#7B2CBF",
   "South America" = "#F564E3"
 )
 
@@ -166,7 +166,7 @@ ggplot(youth_summary, aes(x = Year, y = NEET_avg)) +
 Then we would like to see how education and employment each contribute to the EET, 
 one would create a table to illustrate how they correlated
 
-```{r Contribution to NEET, message=FALSE}
+```{r Contribution to NEET, message=FALSE, warning=FALSE}
 # First, we merge the school enrollment and youth unemployment data into the
 # youth summary data frame. Ignore NAs so that the weighted average calculation
 # would be more calculating from the rest of the data.
@@ -188,11 +188,11 @@ youth_summary <- youth_neet %>%
 # a data frame.
 
 Cor_NEET_Con <- (function() {
-  SE_corr <- youth_summary %>%
+  SE_corr <- youth_neet %>%
     group_by(Continent) %>%
     summarise(
       test = list(cor.test(
-        NEET_avg, SE_avg, method = "spearman",use = "complete.obs"
+        Percentage_NEET, School_Enrollment, method = "spearman",use = "complete.obs"
         )
       )
     ) %>%
@@ -202,11 +202,13 @@ Cor_NEET_Con <- (function() {
     ) %>%
     select(-test)
 
-  Unemp_corr <- youth_summary %>%
+  # please note that for spearman, p-test cannot deal with ties, so it just shows estimate 
+  # ao 0.0000 is just an estimation of p-test which indicate the strong significance.
+  Unemp_corr <- youth_neet %>%
     group_by(Continent) %>%
     summarise(
       test = list(cor.test(
-        NEET_avg, Unemp_avg, method = "spearman", use = "complete.obs"
+        Percentage_NEET, Youth_Unemployment, method = "spearman", use = "complete.obs"
         )
       )
     ) %>%
@@ -245,7 +247,7 @@ Cor_NEET_World <- (function() {
   )
   
   data.frame(
-    variable = c("SE", "Unemployment"),
+    variable = c("Unemployment", "SE"),
     correlation = round(c(NEET_Unemp$estimate, NEET_SE$estimate), 4),
     p_value = round(c(NEET_Unemp$p.value, NEET_SE$p.value), 4)
   )
@@ -267,14 +269,16 @@ youth_neet %>% ggplot(aes(x = Percentage_NEET, y = School_Enrollment)) +
     title = "School Enrolment (Tertiary) and NEET Percentage Comparison",
     y = "School Enrolment (%)",
     x = "NEET (%)"
-  )
+  )+
+  scale_colour_manual(values = continent_colors)
 
 # Note that for some country the school enrolment rate is beyond 100%, that is not
 # an error actually. As that percentage is calculated by 
 # total population in tertiary education (irrespective of age) / offcial age for tertiary edu
 # so making it possible, like Greece.
 
-youth_neet %>% ggplot(aes(x = Percentage_NEET, y = Youth_Unemployment)) +
+youth_neet %>% 
+  ggplot(aes(x = Percentage_NEET, y = Youth_Unemployment)) +
   geom_point(aes(colour = Continent), alpha = 0.4) + 
   geom_smooth(method = "lm")+
   theme_minimal()+
@@ -282,7 +286,8 @@ youth_neet %>% ggplot(aes(x = Percentage_NEET, y = Youth_Unemployment)) +
     title = "Youth Unemployment and NEET Percentage Comparison",
     y = "Youth Unemployment (%)",
     x = "NEET (%)"
-  )
+  )+
+  scale_colour_manual(values = continent_colors)
   
 ```
 The below code chunks would be focus on the correlation between NEET and GDP per head.
