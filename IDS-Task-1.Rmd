@@ -280,27 +280,55 @@ ggplot(filtered_df, aes(x = Year, y = Gdp, colour = Entity)) +
 
 Graph to see if china and india are the drivers of asias growth
 ```{r}
-# Filter for China and India
-china_india <- gdp_per_capita_df %>%
-  filter(Entity %in% c("China", "India")) %>%
-  rename(Growth = Growth)
 
-# Filter for Asia
-asia_growth <- continents_growth_df %>%
-  filter(Continent == "Asia") %>%
-  rename(Growth = Avg_Growth) %>%
-  mutate(Entity = "Asia (Avg)")
 
-# Combine datasets
-asia_growth <- bind_rows(
-  china_india,
-  asia_growth
-)
+top_2_per_continent <- gdp_per_capita_df %>%
+  group_by(Continent, Entity) %>%
+  summarise(Total_GDP = sum(Gdp, na.rm = TRUE)) %>%
+  arrange(Continent, desc(Total_GDP)) %>%
+  group_by(Continent) %>%
+  slice(1:2) %>%
+  ungroup()
 
-asia_growth %>% ggplot(aes(x = Year, y = Growth, colour = Entity)) +
-  geom_point() +
-  geom_line() +
-  labs(title = "Comparing Asia's average growth with China and Indias growth", y = "Growth (%)")
+get_plot_data <- function(x) {
+
+  top_2_entities <- top_2_per_continent %>%
+    filter(Continent == x) %>%
+    pull(Entity)
+
+  country_data <- gdp_per_capita_df %>%
+    filter(Continent == x, Entity %in% top_2_entities)
+
+  continent_avg <- continents_growth_df %>%
+    filter(Continent == x) %>%
+    rename(Growth = Avg_Growth) %>%
+    mutate(Entity = "Continent Average")
+
+  plot_data <- bind_rows(country_data, continent_avg)
+
+  return(plot_data)
+}
+
+plot_drivers <- function(continent) {
+  data <- get_plot_data(continent)
+
+  ggplot(data, aes(x = Year, y = Growth, colour = Entity)) +
+    geom_line() +
+    geom_point() +
+    labs(
+      title = paste("Top 2 GDP Growth vs Avg -", continent),
+      y = "Growth (%)"
+    )
+}
+
+plot_drivers("Africa")
+plot_drivers("Asia")
+plot_drivers("Europe")
+plot_drivers("North America")
+plot_drivers("South America")
+plot_drivers("Oceania")
+
+
 
 ```
 
