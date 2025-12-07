@@ -152,12 +152,14 @@ ldc <- gdp_per_capita_df %>%
   filter (Ldc == TRUE)
 ```
 
+
 Plot GDP growth by continent
+
 ```{r}
 ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
+  geom_point() +
   geom_line() +
   facet_wrap(~ Continent) +
-  theme_minimal() +
   labs(
     title = "GDP Growth of LDCs by Continent",
     x = "Year",
@@ -178,14 +180,15 @@ ldc_weighted <- ldc %>%
   )
 ```
 
+
 Plot weighted GDP growth by continent with a 7% reference line
 
 ```{r}
 ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, color = Continent)) +
+  geom_point() +
   geom_line() +
   facet_wrap(~ Continent, scales = "free_y") +
   geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
-  theme_minimal() +
   labs(
     title = "Weighted GDP Growth of LDCs by Continent",
     x = "Year",
@@ -203,13 +206,14 @@ ldc_7 <- ldc %>%
   ungroup()
 ```
 
+
 Plot their graph
 
 ```{r}
 ggplot (ldc_7, aes(x = Year, y = Growth, color = Entity)) + 
+  geom_point() +
   geom_line() + 
   facet_wrap (~ Continent) +
-  theme_minimal() + 
   labs(
     title = "GDP Growth of LDCs that reached 7%",
     x = "Year",
@@ -226,7 +230,8 @@ ldc %>%
   group_by(Entity) %>%
   summarise(avg_growth = mean(Growth, na.rm = TRUE)) %>%
   arrange(desc(avg_growth)) 
-```  
+```
+
 
 REF:
 
