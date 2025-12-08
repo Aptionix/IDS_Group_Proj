@@ -13,6 +13,11 @@ This is the Introduction to Data Science group project repository
 
 - jsmntrbch - **Jasmine Trabucchi**
 
+## Codings
+
+The codings for this project is split into 3 separete files - Setting up, Task 1 (The GDP per capita), and Task 2 (The NEET), and pdf files are compiled for each file.
+
+
 ## CHANGE OF FILE NAME
 
 I've changed the name of the file in the folder `exported_data` for 
