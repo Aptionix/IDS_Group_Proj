@@ -17,6 +17,9 @@ This is the Introduction to Data Science group project repository
 
 The codings for this project is split into 3 separete files - Setting up, Task 1 (The GDP per capita), and Task 2 (The NEET), and pdf files are compiled for each file.
 
+## The Report
+
+The report is named as `IDS Group Project Report.pdf`
 
 ## CHANGE OF FILE NAME
 
