@@ -1,6 +1,6 @@
 ---
 title: "Task 1"
-author: "CJD"
+author: "K9"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
@@ -9,14 +9,17 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Librarys:
+Loading librarys:
 ```{r}
+#install.packages("tidyverse")
+#install.packages("ggplot2")
+
 library(tidyverse)
 library(ggplot2)
 ```
 
 
-Set WD and import data
+Import data
 ```{r}
 gdp_per_capita_df <- read.csv("Exported_data/gdp_per_capita_cleaned.csv")
 gdp_per_capita_df <- gdp_per_capita_df %>%
@@ -34,8 +37,9 @@ continent_gdp_totals <- gdp_per_capita_df %>%
   ungroup()
 ```
 
+## Target 1.1 - Sustain per capita economic growth in accordance with national circumstances
 
-Plot a graph of GDP for each continent, vs time
+Plot a graph of GDP against time for each continent
 ```{r}
 continent_gdp_totals %>% ggplot(aes(x = Year, y = Total_GDP, colour = Continent)) +
   geom_point() +
@@ -55,7 +59,7 @@ continent_gdp_totals <- continent_gdp_totals %>%
 
 
 
-We now replot the graph, using normalised values
+We now replot the graph, using indexed values (starting value index 100)
 ```{r}
 continent_gdp_totals %>% ggplot(aes(x = Year, y = GDP_Index, colour = Continent)) +
   geom_point() +
@@ -71,7 +75,7 @@ continent_gdp_totals %>% ggplot(aes(x = Year, y = GDP_Index, colour = Continent)
 ```
 
 
-Calculate the weighted and unweighted growth of each continent
+Calculate the weighted and mean growth of each continent
 ```{r}
 continents_growth_df <- gdp_per_capita_df %>%
   group_by(Continent, Year) %>%
@@ -125,171 +129,9 @@ continents_growth_df %>% ggplot(aes(x = Year, y = Avg_Growth_Index, colour = Con
   labs(title = "GDP Growth Index (avg)/Year for 6 continents", y = "GDP Growth (%)")
 ```
 
-
-
-
-REF:
-
-28/11/2025 - asked ChatGPT - "i have text near the last points on the x axis, how can i make it so it doesn't overlap the axis"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Create an LDC database
-
+Now we'll plot a graph to see if top 2 GDP countries are the drivers between continental 
+Making a new data frame with the top 2 countries per continent and their gdps
 ```{r}
-ldc <- gdp_per_capita_df %>%
-  filter (Ldc == TRUE)
-```
-
-
-Plot GDP growth by continent
-
-```{r}
-ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
-  geom_point() +
-  geom_line() +
-  facet_wrap(~ Continent) +
-  labs(
-    title = "GDP Growth of LDCs by Continent",
-    x = "Year",
-    y = "GDP Growth (%)"
-  )
-```
-
-Compute the weighted average GDP growth for each continent
-
-```{r}
-ldc_weighted <- ldc %>%
-  group_by(Year, Continent) %>%
-  summarise(
-    weighted_growth =
-      sum(Gdp_per_capita * Growth, na.rm = TRUE) /
-      sum(Gdp_per_capita, na.rm = TRUE),
-    .groups = "drop"
-  )
-```
-
-
-Plot weighted GDP growth by continent with a 7% reference line
-
-```{r}
-ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, color = Continent)) +
-  geom_point() +
-  geom_line() +
-  facet_wrap(~ Continent, scales = "free_y") +
-  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
-  labs(
-    title = "Weighted GDP Growth of LDCs by Continent",
-    x = "Year",
-    y = "Weighted GDP Growth (%)"
-  )
-```
-
-
-Identify which LDCs have had a growth that reached 7% and plot their growth
-
-```{r}
-ldc_7 <- ldc %>%
-  group_by(Entity) %>%
-  filter(any(Growth >= 7)) %>%
-  ungroup()
-```
-
-
-Plot their graph
-
-```{r}
-ggplot (ldc_7, aes(x = Year, y = Growth, color = Entity)) + 
-  geom_point() +
-  geom_line() + 
-  facet_wrap (~ Continent) +
-  labs(
-    title = "GDP Growth of LDCs that reached 7%",
-    x = "Year",
-    y = "GDP Growth(%)"
-  )
-```
-
-
-
-Determine which countries have had the highest growth over the years
-
-```{r}
-ldc %>%
-  group_by(Entity) %>%
-  summarise(avg_growth = mean(Growth, na.rm = TRUE)) %>%
-  arrange(desc(avg_growth)) 
-```
-
-
-REF:
-
-28/11/2025 - asked ChatGPT - "“I have a facet plot in ggplot with some continents having tons of lines and some only one. How can I adjust the y-axis scales so each graph uses the right space for its lines and they don’t look squished or empty?"
-
-
-
-
-
-
-
-Find the 3 countries with most GDP growth, and 3 countries with most GDP decline 
-
-```{r}
-# Top 3 growth
-top_growth <- gdp_per_capita_df %>%
-  group_by(Entity) %>%
-  summarise(Avg_Growth = mean(Growth, na.rm = TRUE)) %>%
-  arrange(desc(Avg_Growth)) %>%
-  slice(1:3)
-
-# Top 3 decline
-top_decline <- gdp_per_capita_df %>%
-  group_by(Entity) %>%
-  summarise(Avg_Growth = mean(Growth, na.rm = TRUE)) %>%
-  arrange(Avg_Growth) %>%
-  slice(1:3)
-```
-
-Find the countries with biggest gdp in each continent 
-```{r}
-top_3_per_continent <- gdp_per_capita_df %>%
-  group_by(Continent, Entity) %>%
-  summarise(Total_GDP = sum(Gdp, na.rm = TRUE)) %>%
-  arrange(Continent, desc(Total_GDP)) %>%
-  group_by(Continent) %>%
-  slice(1:3)
-```
-
-Plot their graphs 
-```{r}
-filtered_df <- gdp_per_capita_df %>%
-  semi_join(top_3_per_continent, by = c("Continent", "Entity"))
-
-ggplot(filtered_df, aes(x = Year, y = Gdp, colour = Entity)) +
-  geom_line() +
-  facet_wrap(~ Continent, scales = "free_y") +
-  labs(title = "Top 3 Countries by GDP per Capita (per Continent)", y = "GDP per capita")
-#free y scaling - allows the y-axis of a plot to vary independently for each row of facets
-```
-
-
-
-
-Graph to see if china and india are the drivers of asias growth
-```{r}
-
-
 top_2_per_continent <- gdp_per_capita_df %>%
   group_by(Continent, Entity) %>%
   summarise(Total_GDP = sum(Gdp, na.rm = TRUE)) %>%
@@ -297,7 +139,11 @@ top_2_per_continent <- gdp_per_capita_df %>%
   group_by(Continent) %>%
   slice(1:2) %>%
   ungroup()
+```
 
+
+Function which returns a dataset containing GDP growth for the top 2 countries in a continent and the continent's average growth
+```{r}
 get_plot_data <- function(x) {
 
   top_2_entities <- top_2_per_continent %>%
@@ -316,7 +162,10 @@ get_plot_data <- function(x) {
 
   return(plot_data)
 }
+```
 
+Function to plot the graphs
+```{r}
 plot_drivers <- function(continent) {
   data <- get_plot_data(continent)
 
@@ -328,29 +177,106 @@ plot_drivers <- function(continent) {
       y = "Growth (%)"
     )
 }
+```
 
+Plotting the graphs
+```{r}
 plot_drivers("Africa")
 plot_drivers("Asia")
 plot_drivers("Europe")
 plot_drivers("North America")
 plot_drivers("South America")
 plot_drivers("Oceania")
-
-
-
 ```
 
 
 
-ANALYSIS
-Africa: Nigeria, South Africa, Algeria
-Asia: China, India, Japan
-Europe: Germany, UK, France. Germany leading 
-North America: US, Mexico, Canada
-Oceania: Australia, New Zealand, Papa New Guinea
-South America: Brazil, Argentina, Colombia. Brazil drives volatility, steady increase 
+## Target 1.2 - LDC 7% Growth
 
-in all continents apart from Africa, there is one clear country that is driving GDP
-why this is important to analyse? these countries are the ones that drive continent verages
-the weighted averages are heavily influenced by large economics (eg US, China, Germany) 
-spikes/dips in major economies explain most fluctations in continent graphs. this can definitely be seen in europe in thr last few years for example
+Create an LDC database
+```{r}
+ldc <- gdp_per_capita_df %>%
+  filter (Ldc == TRUE)
+```
+
+
+Plot GDP growth by continent
+```{r}
+ggplot(ldc, aes(x = Year, y = Growth, color = Entity)) +
+  geom_line() +
+  facet_wrap(~ Continent) +
+  labs(
+    title = "GDP Growth of LDCs by Continent",
+    x = "Year",
+    y = "GDP Growth (%)"
+  )
+```
+
+
+Compute the weighted average GDP growth for each continent
+```{r}
+ldc_weighted <- ldc %>%
+  group_by(Year, Continent) %>%
+  summarise(
+    weighted_growth =
+      sum(Gdp_per_capita * Growth, na.rm = TRUE) /
+      sum(Gdp_per_capita, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+
+Plot weighted GDP growth by continent with a 7% reference line
+```{r}
+ggplot(ldc_weighted, aes(x = Year, y = weighted_growth, color = Continent)) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~ Continent, scales = "free_y") +
+  geom_hline(yintercept = 7, linetype = "dashed", color = "red") +
+  labs(
+    title = "Weighted GDP Growth of LDCs by Continent",
+    x = "Year",
+    y = "Weighted GDP Growth (%)"
+  )
+```
+
+
+Identify which LDCs have had a growth that reached 7% and plot their growth
+```{r}
+ldc_7 <- ldc %>%
+  group_by(Entity) %>%
+  filter(any(Growth >= 7)) %>%
+  ungroup()
+```
+
+
+Plot their graph
+```{r}
+ggplot (ldc_7, aes(x = Year, y = Growth, color = Entity)) + 
+  geom_point() +
+  geom_line() + 
+  facet_wrap (~ Continent) +
+  labs(
+    title = "GDP Growth of LDCs that reached 7%",
+    x = "Year",
+    y = "GDP Growth(%)"
+  )
+```
+
+
+Determine which countries have had the highest growth over the years
+```{r}
+ldc %>%
+  group_by(Entity) %>%
+  summarise(avg_growth = mean(Growth, na.rm = TRUE)) %>%
+  arrange(desc(avg_growth)) 
+```
+
+
+
+
+
+
+REF:
+28/11/2025 - asked ChatGPT - "i have text near the last points on the x axis, how can i make it so it doesn't overlap the axis"
+28/11/2025 - asked ChatGPT - "“I have a facet plot in ggplot with some continents having tons of lines and some only one. How can I adjust the y-axis scales so each graph uses the right space for its lines and they don’t look squished or empty?"
