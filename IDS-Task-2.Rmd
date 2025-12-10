@@ -41,7 +41,7 @@ youth_neet %>%
   labs(
     x = "Year",
     y = "Percentage",
-    title = "Comparison of NEET"
+    title = "Figure 1"
   ) +
   theme_minimal() +
   theme(plot.title = element_text(
@@ -94,7 +94,7 @@ slope_neet_year <- youth_summary %>%
 # Create comprehensive comparison table
 slope_neet_year <- slope_neet_year %>%
   mutate(
-    # Binary significance at 5% level
+    # significance at 5% level
     significance = ifelse(p < 0.05, "Yes", "No"),
     
     # Star notation for significance levels
@@ -105,6 +105,8 @@ slope_neet_year <- slope_neet_year %>%
       TRUE ~ "n.s."             # Not significant
     )
   )
+
+# The belwo table is commented out as it is not included in the report
 
 # Display comparison table
 # Shows side-by-side results for hypothesis testing
@@ -147,8 +149,7 @@ ggplot(youth_summary, aes(x = Year, y = NEET_avg)) +
   scale_fill_manual(values = continent_colors) +
   facet_wrap(~ Continent, scales = "free_y") +
   labs(
-    title = "Youth Not in EET: Trend by Continent",
-    subtitle = "Weighted averages with linear regression trend lines",
+    title = "Figure 2",
     x = "Year",
     y = "NEET (%)"
   ) +
@@ -226,7 +227,7 @@ Cor_NEET_Con <- (function() {
 
 kable(Cor_NEET_Con,
   format = "markdown",
-  caption = "Correlation of NEET with Youth Unemployment and School Enrollment (Continental)"
+  caption = "Continental Correlation"
 )
 ```
 If we do not group the data by continent rather seeing them as a whole,then we 
@@ -255,12 +256,14 @@ Cor_NEET_World <- (function() {
 
 kable(Cor_NEET_World,
   format = "markdown",
-  caption = "Correlation of NEET with Youth Unemployment and School Enrollment (World)"
+  caption = "Global Correlation"
 )
 
 ```
 
 ```{r correlation plot NEET v.s. SE and Unemp, warning=FALSE}
+# Note: these two graphs are not included in the written report
+
 youth_neet %>% ggplot(aes(x = Percentage_NEET, y = School_Enrollment)) +
   geom_point(aes(colour = Continent), alpha = 0.4) + 
   geom_smooth(method = "lm")+
